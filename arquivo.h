@@ -10,6 +10,6 @@ int escreveBinario(Pergunta *pergunta, int qtde);
 
 int lerCSV(Pergunta **pergunta, int *qtde);
 
-int exportaCSV(Pergunta *pergunta, int qtde);
+int salvaCSV(Pergunta *pergunta, int qtde);
 
 #endif

@@ -15,4 +15,6 @@ int excluir(Pergunta **pergunta, int *qtde);
 
 void exibirPergunta(Pergunta pergunta);
 
+void exibeEnunciado(Pergunta pergunta);
+
 #endif
