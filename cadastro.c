@@ -29,7 +29,6 @@ int inserir(Pergunta **perguntas, int *qtde){
         limparBuffer(); // Joga a letra fora do buffer
         }
         limparBuffer();
-        getchar();
     }while(novas <= 0);
 
     temp = realloc(*perguntas, ((*qtde) + novas) * sizeof(Pergunta));
@@ -149,7 +148,7 @@ int pesquisar(Pergunta *pergunta, int qtde){
             "4 - Difícil\n"
             "5 - Muito Difícil\n"
             "Digite a dificuldade: ");
-            while (scanf("%d", &opcao) != 1){
+            while (scanf("%d", &dificuldade) != 1){
             printf("Entrada invalida! Digite apenas um numero: ");
             limparBuffer(); // Joga a letra fora do buffer
             }
@@ -199,7 +198,7 @@ int alterar(Pergunta *pergunta, int qtde){
 
     for (int i = 0; i < qtde; i++)
     {
-        exibeEnunciado(pergunta[i]);
+        exibeEnunciado(pergunta[i],i);
     }// for
     
     do{
@@ -302,9 +301,6 @@ int excluir(Pergunta **pergunta, int *qtde){
 
     do{
         printf("Digite um indice uma pergunta a ser excluida: ");
-        for(int i = 0; i < (*qtde);i++){
-            printf("%d,");
-        }// for
         while (scanf("%d", &indice) != 1) {
         printf("Entrada invalida! Digite apenas um numero: ");
         limparBuffer(); // Joga a letra fora do buffer
@@ -358,6 +354,7 @@ void exibirPergunta(Pergunta pergunta){
  * @brief Exibe um enunciado
  * 
  */
-void exibeEnunciado(Pergunta pergunta){
+void exibeEnunciado(Pergunta pergunta, int i){
+    printf("Pergunta %d.\n",i);
     printf("%-200s\n",pergunta.enunciado);
 }// exibeEnunciado

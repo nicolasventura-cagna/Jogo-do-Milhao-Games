@@ -271,9 +271,9 @@ int jogar(Pergunta *perguntas, int qtde){
 
         exibirPerguntaJogo(perguntas[idx], &p);
 
-        printf("Resposta (A-D) ou P para parar: ");
+        printf("Resposta (A-D) ou P para parar:");
         scanf(" %c", &resposta);
-        resposta = toupper(resposta); //btw achei esse toupper, muito bom.
+        resposta = toupper(resposta); //btw achei esse toupper muito bom.
 
         if(resposta == 'P'){
             parou = 1;

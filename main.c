@@ -42,8 +42,7 @@ int main(void){
         printf("Entrada invalida! Digite apenas um numero: ");
         limparBuffer(); // Joga a letra fora do buffer
         }// while
-limparBuffer();
-        getchar();
+        limparBuffer();
 
         switch(opcao){
             case JOGAR:// 1

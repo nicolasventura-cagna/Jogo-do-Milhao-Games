@@ -21,9 +21,9 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 
 # Lista dos artigos código fonte (.c nesse caso)
-SRCS = main.c cadastro.c arquivo.c jogo.c limpabuffer.c
+SRCS = main.c cadastro.c arquivo.c jogo.c limpabuffer.c 
 # Lista dos cabeçalhos (.h) - avisa o make caso teve alguma alteração
-HEADERS = pergunta.h cadastro.h arquivo.h jogo.h limpabuffer.h
+HEADERS = pergunta.h cadastro.h arquivo.h jogo.h limpabuffer.h 
 # Substituição altomatica de texto (.c -> .o)
 OBJS = $(SRCS:.c=.o)
 

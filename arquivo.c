@@ -57,7 +57,7 @@ int lerBinario(Pergunta **pergunta, int *qtde){
  * @return int Sucesso (0) na inserção ou Falha (1)
  */
 int escreveBinario(Pergunta *pergunta, int qtde){
-    FILE *arq = fopen("dados.bin", "wb");//Mudar wb?
+    FILE *arq = fopen("dados.bin", "wb");//Mudar wb? nao
     if(arq == NULL){
         return 1;
     }
@@ -82,12 +82,15 @@ int lerCSV(Pergunta **pergunta, int *qtde){
     int encontrou = 0;
     int i = 0;
     Pergunta *temp;
-    FILE *arq = fopen("perguntas.csv", "r");
+    FILE *arq = fopen("./perguntas.csv", "r");
+
     if(arq == NULL){
+        printf("Erro na abertura do arquivo./n");
         return 1;
     }// if
 
     if(fgets(linha, sizeof(linha), arq) == NULL){
+        printf("Arquivo vazio.\n");
         fclose(arq);
         return 1;
     }// if
@@ -101,6 +104,7 @@ int lerCSV(Pergunta **pergunta, int *qtde){
     }// while
 
     if(encontrou == 0){
+        printf("Encontrou zerou.\n");
         fclose(arq);
         return 1;
     }// if
@@ -110,6 +114,7 @@ int lerCSV(Pergunta **pergunta, int *qtde){
 
         temp = realloc(*pergunta, (*qtde +1) * sizeof(Pergunta));
         if(temp == NULL){
+            printf("Erro na abertura do arquivo.\n");
             fclose(arq);
             return 1;
         }// if
