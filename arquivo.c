@@ -5,7 +5,7 @@
 #include "cadastro.h"
 
 
-//include guard é só pra header :
+//include guard é só pra header : tendeu ;p
 
 //int pra saber se deu certo ou n
 
@@ -33,7 +33,7 @@ int lerBinario(Pergunta **pergunta, int *qtde){
         *pergunta = NULL;
         fclose(arq);
         return 0;
-    }// if
+    }
 
     fseek(arq, 0, SEEK_SET);//Volta ao início
 
@@ -41,7 +41,7 @@ int lerBinario(Pergunta **pergunta, int *qtde){
     if((*pergunta)==NULL){
         fclose(arq);
         return 1;
-    }// if
+    }
 
     fread(*pergunta, sizeof(Pergunta), (*qtde), arq);
 
@@ -49,6 +49,7 @@ int lerBinario(Pergunta **pergunta, int *qtde){
     
     return 0;
 }// lerBinario
+
 /**
  * @brief 
  * 
@@ -57,12 +58,21 @@ int lerBinario(Pergunta **pergunta, int *qtde){
  * @return int Sucesso (0) na inserção ou Falha (1)
  */
 int escreveBinario(Pergunta *pergunta, int qtde){
-    FILE *arq = fopen("dados.bin", "wb");//Mudar wb? nao
+    FILE *arq = fopen("dados.bin", "wb");//Mudar wb?
     if(arq == NULL){
         return 1;
     }
 
-    fwrite(pergunta, sizeof(Pergunta), qtde, arq);
+    /*
+    if (fwrite(pergunta, sizeof(Pergunta), (size_t)qtde, arq) != (size_t)qtde) {
+    fclose(arq);
+    return 1;
+    Dava Warning, comparacao de tipos dif
+    }*/
+    if(fwrite(pergunta, sizeof(Pergunta), (size_t)qtde, arq) != (size_t)qtde){
+        fclose(arq);
+        return 1;
+    }
 
     fclose(arq);
 
@@ -70,7 +80,7 @@ int escreveBinario(Pergunta *pergunta, int qtde){
 }// escreveBinario
 
 /**
- * @brief Lê CSV ............ sla
+ * @brief Lê CSV 
  * 
  * @param perguntas  Vetor que possui todas perguntas
  * @param qtde Quantidade de perguntas cadastradas
@@ -82,61 +92,58 @@ int lerCSV(Pergunta **pergunta, int *qtde){
     int encontrou = 0;
     int i = 0;
     Pergunta *temp;
-    FILE *arq = fopen("./perguntas.csv", "r");
-
+    FILE *arq = fopen("perguntas.csv", "r");
     if(arq == NULL){
-        printf("Erro na abertura do arquivo./n");
         return 1;
-    }// if
+    }
 
     if(fgets(linha, sizeof(linha), arq) == NULL){
-        printf("Arquivo vazio.\n");
         fclose(arq);
         return 1;
-    }// if
+    }
 
     while(linha[i] != '\0'){
         if(linha[i] == '\n'){
             encontrou = 1;
             break;
-        }// if
+        }
         i++;
-    }// while
+    }
 
     if(encontrou == 0){
-        printf("Encontrou zerou.\n");
         fclose(arq);
         return 1;
-    }// if
+    }
 
 
     while(1){//loop infinito
 
         temp = realloc(*pergunta, (*qtde +1) * sizeof(Pergunta));
         if(temp == NULL){
-            printf("Erro na abertura do arquivo.\n");
             fclose(arq);
             return 1;
-        }// if
+        }
 
         *pergunta = temp;
 
-        resultado = fscanf(arq, " %200[^,],%100[^,],%100[^,],%100[^,],%100[^,], %c,%d",(*pergunta)[*qtde].enunciado, (*pergunta)[*qtde].alternativa[0],
+        // \" : mostra aspas dentro da string
+        resultado = fscanf(arq, " \"%200[^\"]\", \"%100[^\"]\", \"%100[^\"]\", \"%100[^\"]\", \"%100[^\"]\", %c,%d",(*pergunta)[*qtde].enunciado, (*pergunta)[*qtde].alternativa[0],
         (*pergunta)[*qtde].alternativa[1], (*pergunta)[*qtde].alternativa[2], (*pergunta)[*qtde].alternativa[3], &(*pergunta)[*qtde].correta,
         &(*pergunta)[*qtde].dificuldade);
         //fscanf que não come espaço, quebra nas vírgulas
 
         if(resultado == EOF){
             break;
-        }// if
+        }
 
         if(resultado != 7){
+            printf("Erro na leitura\n");
             fclose(arq);            
             return 1;
-        }// if
+        }
 
         (*qtde)++;
-    } // while infinito
+    }//while infinito
 
     fclose(arq);
 
@@ -154,7 +161,7 @@ int salvaCSV(Pergunta *pergunta, int qtd){
     FILE *arq = fopen("perguntas.csv","w");
     if(arq == NULL){
         return 1;
-    }// if
+    }
     // manda pro começo do arquivo
     fprintf(arq,"Enunciado,Alternativa1,Alternativa2,Alternativa3,Alternativa4,Correta,Dificuldade\n");
 
@@ -168,9 +175,9 @@ int salvaCSV(Pergunta *pergunta, int qtd){
                 pergunta[i].correta,
                 pergunta[i].dificuldade) < 0){
             fclose(arq);
-            return 1;
-        }// if
-    }// for
+            return 1;//Retorna 1 se deu ruim
+        }
+    }
     fclose(arq);
     return 0;
 }// exportaCSV

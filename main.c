@@ -16,17 +16,20 @@ int main(void){
 
     srand(time(NULL));//gera uma seed aleatoria
 
-   // Se os dados.bin não existirem - passa para a importação dos perguntas.csv
+    // Se os dados.bin não existirem - passa para a importação dos perguntas.csv
+    //DETALHE: Se a pessoa for adicionar direto no .csv, vai dar ruim XDDDDDDDDDDD
     if (lerBinario(&pergunta, &qtdetotal) == 1) {
-        // Se perguntas.csv não existirem - começa vazio
-        if (lerCSV(&pergunta, &qtdetotal) == 0) {
-            printf("Perguntas importadas do perguntas.csv com sucesso!\n");
-        } else {
-            // vazio
+
+        // Se não existir BIN, importa do CSV
+        if(lerCSV(&pergunta, &qtdetotal) == 0){
+            printf("Perguntas importadas do CSV com sucesso!\n");
+
+            escreveBinario(pergunta, qtdetotal);
+        }else{
             pergunta = NULL;
             qtdetotal = 0;
-        }// else
-    }// if
+        }
+    }
 
     do{
         printf("\n>----SHOW DO MILHAO----<\n"
@@ -38,10 +41,12 @@ int main(void){
         "6 = Excluir pergunta\n"
         "0 = Sair\n"
         "Opcao: ");
+
         while (scanf("%d", &opcao) != 1) {
-        printf("Entrada invalida! Digite apenas um numero: ");
-        limparBuffer(); // Joga a letra fora do buffer
-        }// while
+            printf("Entrada invalida! Digite apenas um numero: ");
+            limparBuffer(); // Joga a letra fora do buffer
+        }
+
         limparBuffer();
 
         switch(opcao){
@@ -76,16 +81,19 @@ int main(void){
             default:// != enum Opcoes
                 printf("Opcao invalida.\n");
                 break;
-        }// switch
+        }
+
     }while(opcao != 0);
 
     salvaCSV(pergunta, qtdetotal);
+
+    if(escreveBinario(pergunta, qtdetotal) == 0){//Recria BIN
+        printf("BIN atualizado com sucesso!\n");
+    }else{
+        printf("Erro ao atualizar BIN!\n");
+    }
 
     free(pergunta);
 
     return 0;
 }// main
-
-//não precisou do include guard, talvez ela ia fazer de outra forma :p - NIC
-
-// o que o sono faz para a pessoa XD - E

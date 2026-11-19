@@ -2,7 +2,7 @@
 #define JOGO_H
 
 #include "pergunta.h"
-// definido em "jogo.h"
+
 typedef struct {
     int modo;
     int vidas;
