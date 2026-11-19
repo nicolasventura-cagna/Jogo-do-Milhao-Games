@@ -162,13 +162,13 @@ int salvaCSV(Pergunta *pergunta, int qtd){
 
     for (int i = 0; i < qtd; i++)
     {
-        if(fprintf(arq,"%s,%s,%s,%s,%s,%c,%d\n",pergunta[i].enunciado,
-                pergunta[i].alternativa[0],
-                pergunta[i].alternativa[1],
-                pergunta[i].alternativa[2],
-                pergunta[i].alternativa[3],
-                pergunta[i].correta,
-                pergunta[i].dificuldade) < 0){
+        if(fprintf(arq,"\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%c,%d\n",pergunta[i].enunciado,
+            pergunta[i].alternativa[0],
+            pergunta[i].alternativa[1],
+            pergunta[i].alternativa[2],
+            pergunta[i].alternativa[3],
+            pergunta[i].correta,
+            pergunta[i].dificuldade) < 0){
             fclose(arq);
             return 1;//Retorna 1 se deu ruim
         }
