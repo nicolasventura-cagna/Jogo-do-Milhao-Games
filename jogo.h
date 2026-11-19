@@ -9,6 +9,7 @@ typedef struct {
     float multiplicador;
     float bonus;
     int cash;
+    int extraCash;
     int acertosSeg;
     int rodada;
     int *usadas;

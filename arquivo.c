@@ -4,11 +4,6 @@
 #include "arquivo.h"
 #include "cadastro.h"
 
-
-//include guard é só pra header : tendeu ;p
-
-//int pra saber se deu certo ou n
-
 /**
  * @brief Lê arquivo binário
  * 

@@ -11,8 +11,17 @@
 #define TOTAL_RODADAS 15
 #define PERGUNTAS_POR_NIVEL 3
 
-//quanto cada pergunta vale
-int valorBase[6] = {0, 1000, 2000, 5000, 10000, 50000};
+
+/**
+ * @brief quanto cada pergunta vale por rodada
+ * 
+ */
+int valorRodada[TOTAL_RODADAS + 1] = {
+    0,
+    1000, 2000, 3000, 4000, 5000,
+    10000, 20000, 30000, 40000, 50000,
+    100000, 200000, 300000, 500000, 1000000
+};
 
 /**
  * @brief Coloca vidas e multiplicador conforme o modo e zera o resto
@@ -39,6 +48,7 @@ void iniciarPartida(Partida *p, int modo){
 
     p->bonus = 0;
     p->cash = 0;
+    p->extraCash = 0;
     p->acertosSeg = 0;
     p->rodada = 1;//pra começar na rodada 1
     p->usadas = NULL;//sem sorteio ainda
@@ -137,10 +147,14 @@ int sortearPergunta(Partida *p, Pergunta *perguntas, int qtde, int nivel){
 int conferirResposta(Partida *p, Pergunta pergunta, char resposta){
     int valor;
 
-    //toupper caso digite a resposta em minuscula
     if(toupper(resposta) == pergunta.correta){
-        valor = valorBase[pergunta.dificuldade] * (p->multiplicador + p->bonus);
-        p->cash += valor;
+        if(p->rodada == TOTAL_RODADAS){
+            valor = valorRodada[p->rodada];//a do milhao nao tem multiplicador
+        }else{
+            valor = valorRodada[p->rodada] * (p->multiplicador + p->bonus);
+        }
+
+        p->cash = valor + p->extraCash;
         p->acertosSeg++;
         p->bonus = 0;//bonus é so pra uma pergunta
         return 1;
@@ -199,6 +213,7 @@ int aplicarKillstreak(Partida *p){
 
     if(sorteio < 35){
         p->cash += 1000;
+        p->extraCash += 1000;
         return 0;
     }
 
@@ -389,8 +404,3 @@ int jogar(Pergunta *perguntas, int qtde){
 
     return total;
 }
-
-//gcc main.c cadastro.c arquivo.c jogo.c -o jogo
-// ./jogo
-
-//pra testar ai

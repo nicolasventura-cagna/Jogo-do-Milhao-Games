@@ -1,64 +1,82 @@
 # utilize "#" para fazer comentarios (PYTHONNNNNNNNNNNNN)
-# Para compilar no windows, use mingw32-make (COMPILAR), use mingw32-make run (RODAR) e use mingw32-make clean (LIMPAR)
+# Windows: mingw32-make (COMPILAR), mingw32-make run (RODAR)
+# Linux/MacOS: make (COMPILAR), make run (RODAR)
+# Para LIMPAR: make clean ou mingw32-make clean
 
-# IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE 
-# |
-# V
-# O QUE VOCÊ DIGITOU NÃO VAI SER COMPILADO SE VOCÊ NÃO SALVAR AS ALTERAÇÕES NO VSCODE
+# IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE IMPORTANTE
 #
-# E SEMPRE CHEQUE SE O TERMINAL ESTA NA ***MESMA*** PASTA QUE OS ARQUIVOS DO PROGRAMA (se não, use "cd nome-do-arq")
+# O QUE VOCÊ DIGITOU NÃO VAI SER COMPILADO SE VOCÊ NÃO
+# SALVAR AS ALTERAÇÕES NO VSCODE
 #
-# NÃO SABE ONDE O TERMINAL ESTA? USE "dir" PARA VER OS ARQUIVOS DENTRO DO ARQUIVO QUE O TERMINAL ESTÁ
+# E SEMPRE CHEQUE SE O TERMINAL ESTÁ NA MESMA PASTA
+# QUE OS ARQUIVOS DO PROGRAMA.
 #
-# SE APARECER A MENSAGEM "Nothing to be done for 'all'" USE **CLEAN** PARA VER O RESULTADO DA COMPILAÇÃO NOVAMENTE 
+# SE APARECER "Nothing to be done for 'all'",
+# USE CLEAN PARA COMPILAR NOVAMENTE.
 #
 # Obrigado pela sua atenção :P
 
+
 # define o compilador (gcc ou clang)
 CC = gcc
-# -Wall e Wextra avisam sobre possíveis bugs no código
+
+# -Wall e -Wextra avisam sobre possíveis bugs no código
 # -g inclui informações para debug
 CFLAGS = -Wall -Wextra -g
 
-# Lista dos artigos código fonte (.c nesse caso)
+
+# Lista dos arquivos de código fonte
 SRCS = main.c cadastro.c arquivo.c jogo.c limpabuffer.c
-# Lista dos cabeçalhos (.h) - avisa o make caso teve alguma alteração
+
+# Lista dos cabeçalhos
 HEADERS = pergunta.h cadastro.h arquivo.h jogo.h limpabuffer.h
-# Substituição altomatica de texto (.c -> .o)
+
+# Substituição automática de texto (.c -> .o)
 OBJS = $(SRCS:.c=.o)
 
-# Checa a variavel interna do sistema:
-# Windows - (OS) = Windows_NT
-# Linux / MacOS - Vazio
-ifeq ($(OS),Windows_NT) # V Windows (CMD / MinGW)  (óbvio)
-# variaveis e diretorios do Windows
+
+# Identifica o sistema operacional
+ifeq ($(OS),Windows_NT)
+
+    # Windows
     TARGET = jogo.exe
     RUN_CMD = .\$(TARGET)
-    CLEAN_CMD = del /Q $(OBJS) $(TARGET) 2>nul || exit 0
-else # V Linux / MacOS
-# variaveis e diretorios do Linux
+    CLEAN_CMD = cmd /C "del /Q $(OBJS) $(TARGET) 2>nul"
+
+else
+
+    # Linux / macOS
     TARGET = jogo
     RUN_CMD = ./$(TARGET)
     CLEAN_CMD = rm -f $(OBJS) $(TARGET)
+
 endif
 
-# Mensagem pro sistema: "Esses lixos aq em baixo SÃO AÇÕES e não arquivos"
+
+# Informa que estas regras não representam arquivos
 .PHONY: all clean run
 
-# Regra padrão (Exemplo: migw32-make)
+
+# Regra padrão: compilar
 all: $(TARGET)
 
-# verifica se os arquivos .o (object) existem e juntam todos
+
+# Junta todos os arquivos objeto e cria o executável
 $(TARGET): $(OBJS)
-# caso ocorra alguma alteração no arquivo .c ou .h, atualiza o .o para todos de baixo
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
+
+# Compila os arquivos .c em arquivos .o
+# Também recompila quando algum cabeçalho é alterado
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# garante compilação antes de rodar
+
+# Garante a compilação antes de executar
 run: all
 	$(RUN_CMD)
-# limpa a pasta de arquivos .o e o executavel final
+
+
+# Remove os arquivos objeto e o executável
 clean:
 	$(CLEAN_CMD)
