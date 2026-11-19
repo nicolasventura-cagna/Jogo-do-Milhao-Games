@@ -7,8 +7,6 @@
 #include "arquivo.h"
 #include "limpabuffer.h"
 
-//FAZER INCLUDE GUARD
-
 
 /**
  * @brief Insere quantas perguntas o usuário desejar
@@ -24,9 +22,9 @@ int inserir(Pergunta **perguntas, int *qtde){
 
     do{
         printf("Quantas perguntas quer adicionar?: ");
-        while (scanf("%d", &novas) != 1) {
-        printf("Entrada invalida! Digite apenas um numero: ");
-        limparBuffer(); // Joga a letra fora do buffer
+        while (scanf("%d", &novas) != 1){//Repete, se usuário for um ... e digitar char em %d 
+            printf("Entrada invalida! Digite apenas um numero: ");
+            limparBuffer(); // Joga a letra fora do buffer
         }
         limparBuffer();
     }while(novas <= 0);
@@ -35,7 +33,7 @@ int inserir(Pergunta **perguntas, int *qtde){
     if(temp == NULL){
         perror("ERRO");
         exit(1);
-    }// if
+    }
 
     *perguntas = temp;
 
@@ -48,19 +46,20 @@ int inserir(Pergunta **perguntas, int *qtde){
             printf("Digite a %d alternativa: ", i+1);
             fgets((*perguntas)[contador].alternativa[i], 100, stdin);
             (*perguntas)[contador].alternativa[i][strcspn((*perguntas)[contador].alternativa[i], "\n")] = '\0';
-        }// for
+        }
 
-        //getchar();
         printf("Qual a correta?(A/B/C/D): ");
         scanf(" %c", &(*perguntas)[contador].correta);
 
 
-        printf("Digite a dificuldade (1(Mt facil) - 5(mt dificil)):");
+        printf("Digite a dificuldade [1(Muito Facil) - 5(Muito Dificil)]: ");
         while (scanf("%d", &(*perguntas)[contador].dificuldade) != 1) {
-        printf("Entrada invalida! Digite apenas um numero: ");
-        limparBuffer(); // Joga a letra fora do buffer
+            printf("Entrada invalida! Digite apenas um numero: ");
+            limparBuffer(); // Joga a letra fora do buffer
         }
         limparBuffer();
+
+        printf("\n");//Evitar ficar tudo junto ;p
     }// for
 
     (*qtde) += novas;
@@ -70,7 +69,9 @@ int inserir(Pergunta **perguntas, int *qtde){
     if(funcionou == 1){
         perror("Erro, tente novamente");
         return 1;
-    }// if
+    }
+
+    printf("%d perguntas cadastradas com sucesso!\n", novas);
 
     return 0;
 }// inserir
@@ -85,13 +86,13 @@ void listar(Pergunta *pergunta, int qtde){
     if(qtde == 0){
         printf("Nenhuma pergunta cadastrada.\n");
         return;
-    }// if
+    }
 
     for(int i = 0; i<qtde; i++){
         printf("\n");
         printf("Pergunta %d\n",i+1);
         exibirPergunta(pergunta[i]);
-    }// for
+    }
 }// listar
 
 /**
@@ -110,12 +111,12 @@ int pesquisar(Pergunta *pergunta, int qtde){
     if(qtde == 0){
         printf("Nenhuma pergunta cadastrada.\n");
         return 0;
-    }// if
+    }
 
     printf("Deseja pesquisar por enunciado (1) ou dificuldade (2)?: ");
     while (scanf("%d", &opcao) != 1){
-    printf("Entrada invalida! Digite apenas um numero: ");
-    limparBuffer(); // Joga a letra fora do buffer
+        printf("Entrada invalida! Digite apenas um numero: ");
+        limparBuffer(); //Joga a letra fora do buffer
     }
     limparBuffer();
 
@@ -131,12 +132,12 @@ int pesquisar(Pergunta *pergunta, int qtde){
                 if(strstr(pergunta[i].enunciado, pesquisa) != NULL){
                     exibirPergunta(pergunta[i]);
                     encontrou++;
-                }// if
-            }// for
+                }
+            }
 
             if(encontrou == 0){
                 printf("Nenhum enunciado semelhante.\n");
-            }// if
+            }
 
             break;
 
@@ -148,28 +149,28 @@ int pesquisar(Pergunta *pergunta, int qtde){
             "4 - Difícil\n"
             "5 - Muito Difícil\n"
             "Digite a dificuldade: ");
-            while (scanf("%d", &dificuldade) != 1){
-            printf("Entrada invalida! Digite apenas um numero: ");
-            limparBuffer(); // Joga a letra fora do buffer
+            while (scanf("%d", &opcao) != 1){
+                printf("Entrada invalida! Digite apenas um numero: ");
+                limparBuffer(); // Joga a letra fora do buffer
             }
             limparBuffer();
             for(int i=0; i<qtde; i++){
                 if(pergunta[i].dificuldade == dificuldade){
                     exibirPergunta(pergunta[i]);
                     encontrou++;
-                }// if
-            }// for
+                }
+            }
 
             if(encontrou == 0){
                 printf("Nenhuma pergunta nessa categoria.\n");
-            }// if
+            }
 
             break;
 
         default:
             printf("Opção inválida.\n");
             return 0;
-    }// switch
+    }
 
 
     return 0;
@@ -194,18 +195,17 @@ int alterar(Pergunta *pergunta, int qtde){
     if(qtde == 0){
         printf("Cadastre uma pergunta primeiro.\n");
         return 0;
-    }// if
+    }
 
-    for (int i = 0; i < qtde; i++)
-    {
-        exibeEnunciado(pergunta[i],i);
-    }// for
+    for (int i = 0; i < qtde; i++){
+        exibeEnunciado(pergunta[i]);
+    }
     
     do{
         printf("Indique a posicao de uma pergunta a ser alterada: ");
         while (scanf("%d", &indice) != 1){
-        printf("Entrada invalida! Digite apenas um numero: ");
-        limparBuffer(); // Joga a letra fora do buffer
+            printf("Entrada invalida! Digite apenas um numero: ");
+            limparBuffer(); // Joga a letra fora do buffer
         }
         limparBuffer();
     }while(indice < 0 || indice >= qtde);
@@ -221,8 +221,8 @@ int alterar(Pergunta *pergunta, int qtde){
     "4 - Dificuldade\n"
     "Escolha: ");
     while (scanf("%d", &escolha) != 1) {
-    printf("Entrada invalida! Digite apenas um numero: ");
-    limparBuffer(); // Joga a letra fora do buffer
+        printf("Entrada invalida! Digite apenas um numero: ");
+        limparBuffer(); // Joga a letra fora do buffer
     }
     limparBuffer();
     
@@ -264,8 +264,8 @@ int alterar(Pergunta *pergunta, int qtde){
 
         case DIFICULDADE:
             do{
-            printf("Nova dificuldade (1-5): ");
-            scanf("%d", &pergunta[indice].dificuldade);
+                printf("Nova dificuldade (1-5): ");
+                scanf("%d", &pergunta[indice].dificuldade);
             }while(pergunta[indice].dificuldade < 1 || pergunta[indice].dificuldade > 5);
 
             break;
@@ -302,8 +302,8 @@ int excluir(Pergunta **pergunta, int *qtde){
     do{
         printf("Digite um indice uma pergunta a ser excluida: ");
         while (scanf("%d", &indice) != 1) {
-        printf("Entrada invalida! Digite apenas um numero: ");
-        limparBuffer(); // Joga a letra fora do buffer
+            printf("Entrada invalida! Digite apenas um numero: ");
+            limparBuffer(); // Joga a letra fora do buffer
         }
         limparBuffer();
     }while(indice < 0 || indice >= (*qtde));
@@ -312,8 +312,7 @@ int excluir(Pergunta **pergunta, int *qtde){
 
     (*qtde)--;
 
-    for (int i = indice; i < (*qtde); i++)// puxa todas as questões para trás
-    {
+    for (int i = indice; i < (*qtde); i++){// puxa todas as questões para trás
         (*pergunta)[i] = (*pergunta)[i+1];
     }// for
 
@@ -324,13 +323,13 @@ int excluir(Pergunta **pergunta, int *qtde){
         Pergunta *temp = realloc(*pergunta, (*qtde) * sizeof(Pergunta));// diminui o tamanho em 1
         if (temp != NULL){
             *pergunta = temp;
-        }// if
-    }// else
+        }
+    }
 
     if (escreveBinario(*pergunta, *qtde) == 1) {
         printf("Erro ao atualizar o arquivo.\n");
         return 1;
-    }// if
+    }
 
     return 0;
 }// excluir
@@ -354,7 +353,6 @@ void exibirPergunta(Pergunta pergunta){
  * @brief Exibe um enunciado
  * 
  */
-void exibeEnunciado(Pergunta pergunta, int i){
-    printf("Pergunta %d.\n",i);
+void exibeEnunciado(Pergunta pergunta){
     printf("%-200s\n",pergunta.enunciado);
 }// exibeEnunciado

@@ -14,7 +14,12 @@
 //quanto cada pergunta vale
 int valorBase[6] = {0, 1000, 2000, 5000, 10000, 50000};
 
-//Coloca vidas e multiplicador conforme o modo e zera o resto
+/**
+ * @brief Coloca vidas e multiplicador conforme o modo e zera o resto
+ * 
+ * @param p 
+ * @param modo 
+ */
 void iniciarPartida(Partida *p, int modo){
     p->modo = modo;
 
@@ -46,7 +51,13 @@ void iniciarPartida(Partida *p, int modo){
     p->altRemovida[3] = 0;
 }
 
-//Esse checa a pergunta já saiu nessa partida (1 = saiu, 0 = não)
+/**
+ * @brief Esse checa a pergunta já saiu nessa partida (1 = saiu, 0 = não)
+ * 
+ * @param p 
+ * @param indice 
+ * @return int 
+ */
 int jaForam(Partida *p, int indice){
     for(int i = 0; i < p->qtdUsadas; i++){
         if(p->usadas[i] == indice){
@@ -56,7 +67,15 @@ int jaForam(Partida *p, int indice){
     return 0;
 }
 
-//Sorteia uma pergunta do nivel que ainda não saiu
+/**
+ * @brief Sorteia uma pergunta do nivel que ainda não saiu
+ * 
+ * @param p 
+ * @param perguntas 
+ * @param qtde 
+ * @param nivel 
+ * @return int 
+ */
 int sortearPergunta(Partida *p, Pergunta *perguntas, int qtde, int nivel){
     int total = 0;//quantas perguntas servem
     int sorteado;
@@ -107,7 +126,14 @@ int sortearPergunta(Partida *p, Pergunta *perguntas, int qtde, int nivel){
     return sorteado;
 }
 
-//Vê se o jogador acertou, duh
+/**
+ * @brief Vê se o jogador acertou
+ * 
+ * @param p 
+ * @param pergunta 
+ * @param resposta 
+ * @return int 
+ */
 int conferirResposta(Partida *p, Pergunta pergunta, char resposta){
     int valor;
 
@@ -126,11 +152,17 @@ int conferirResposta(Partida *p, Pergunta pergunta, char resposta){
     return 0;
 }
 
-//Tira uma alternativa errada 
-int removerAlternativaErrada(Partida *p, Pergunta pergunta){
+/**
+ * @brief Tira uma alternativa errada
+ * 
+ * @param p 
+ * @param pergunta 
+ * @return int 
+ */
+int removerAlternativaErrada(Partida *p, Pergunta pergunta){//Minigames
     int candidatas[4];
     int total = 0;
-
+    
     for(int i = 0; i < 4; i++){
         //'A' + i indica a letra da alternativa (A,B,C,D)
         if('A' + i != pergunta.correta && p->altRemovida[i] == 0){
@@ -149,7 +181,12 @@ int removerAlternativaErrada(Partida *p, Pergunta pergunta){
     return escolhida;
 }
 
-//Com 4 acertos seguidos sorteia um premio
+/**
+ * @brief Com 4 acertos seguidos sorteia um premio
+ * 
+ * @param p 
+ * @return int 
+ */
 int aplicarKillstreak(Partida *p){
     int sorteio;
 
@@ -182,14 +219,23 @@ int aplicarKillstreak(Partida *p){
     return 3;
 }
 
-//Limpa a memória das perguntas usadas
+/**
+ * @brief Limpa a memória das perguntas usadas
+ * 
+ * @param p 
+ */
 void liberarPartida(Partida *p){
     free(p->usadas);
     p->usadas = NULL;
     p->qtdUsadas = 0;
 }
 
-//Mostra a pergunta pro jogador sem a resposta
+/**
+ * @brief Mostra a pergunta pro jogador sem a resposta
+ * 
+ * @param pergunta 
+ * @param p 
+ */
 void exibirPerguntaJogo(Pergunta pergunta, Partida *p){
     printf("\n%s\n", pergunta.enunciado);
 
@@ -200,7 +246,13 @@ void exibirPerguntaJogo(Pergunta pergunta, Partida *p){
     }
 }
 
-//Confere se tem pergunta suficiente pra jogar o jogo.
+/**
+ * @brief Confere se tem pergunta suficiente pra jogar o jogo.
+ * 
+ * @param perguntas 
+ * @param qtde 
+ * @return int 
+ */
 int temPerguntasSuficientes(Pergunta *perguntas, int qtde){
     int contador;
 
@@ -223,7 +275,13 @@ int temPerguntasSuficientes(Pergunta *perguntas, int qtde){
     return 1;
 }
 
-//A partida inteira basicamente. :p
+/**
+ * @brief A partida inteira basicamente. :p
+ * 
+ * @param perguntas 
+ * @param qtde 
+ * @return int 
+ */
 int jogar(Pergunta *perguntas, int qtde){
     Partida p;
     int modo;
@@ -271,9 +329,9 @@ int jogar(Pergunta *perguntas, int qtde){
 
         exibirPerguntaJogo(perguntas[idx], &p);
 
-        printf("Resposta (A-D) ou P para parar:");
+        printf("Resposta (A-D) ou P para parar: ");
         scanf(" %c", &resposta);
-        resposta = toupper(resposta); //btw achei esse toupper muito bom.
+        resposta = toupper(resposta); //btw achei esse toupper, muito bom. (De nada - G)
 
         if(resposta == 'P'){
             parou = 1;
