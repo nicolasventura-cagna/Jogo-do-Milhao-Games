@@ -1,24 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-//#include "raylib.h"
+
+#include "raylib.h"
 #include "arquivo.h"
 #include "cadastro.h"
 #include "jogo.h"
+#include "interface.h"
 #include "limpabuffer.h"
+
+#define LARGURA 1000
+#define ALTURA 600
+#define NOME "Jogo do Milhão"
 
 typedef enum{SAIR,JOGAR,CADASTRAR,LISTAR,PESQUISAR,ALTERAR,EXCLUIR}Opcoes;
 
 int main(void){
     Pergunta *pergunta = NULL;
     int qtdetotal = 0;
-    int opcao;
+    
+    //Raylib:
+    
 
     srand(time(NULL));//gera uma seed aleatoria
 
     // Se os dados.bin não existirem - passa para a importação dos perguntas.csv
     //DETALHE: Se a pessoa for adicionar direto no .csv, vai dar ruim XDDDDDDDDDDD
-    if (lerBinario(&pergunta, &qtdetotal) == 1) {
+    if(lerBinario(&pergunta, &qtdetotal) == 1){
 
         // Se não existir BIN, importa do CSV
         if(lerCSV(&pergunta, &qtdetotal) == 0){
@@ -31,59 +39,41 @@ int main(void){
         }
     }
 
-    do{
-        printf("\n>----SHOW DO MILHAO----<\n"
-        "1 = Jogar\n"
-        "2 = Cadastrar perguntas\n"
-        "3 = Listar perguntas\n"
-        "4 = Pesquisar perguntas\n"
-        "5 = Alterar pergunta\n"
-        "6 = Excluir pergunta\n"
-        "0 = Sair\n"
-        "Opcao: ");
+    InitWindow(LARGURA, ALTURA, NOME);
+    SetTargetFPS(60);
 
-        while (scanf("%d", &opcao) != 1) {
-            printf("Entrada invalida! Digite apenas um numero: ");
-            limparBuffer(); // Joga a letra fora do buffer
-        }
+    while (!WindowShouldClose() && telaAtual != -1)    // Detecta o botão de fechar a janela ou a tecla ESC
+    {
+        mouse = GetMousePosition();
 
-        limparBuffer();
-
-        switch(opcao){
-            case JOGAR:// 1
-                jogar(pergunta, qtdetotal);
+        switch(telaAtual){
+            case 0:
+                Menu();
                 break;
 
-            case CADASTRAR:// 2
-                inserir(&pergunta, &qtdetotal);
+            case 1:
+                OpcJogarModo();
                 break;
 
-            case LISTAR:// 3
-                listar(pergunta, qtdetotal);
+
+
+
+            case 10:
+                OpcPerguntas();
                 break;
 
-            case PESQUISAR:// 4
-                pesquisar(pergunta, qtdetotal);
+            case 12:
+                PerguntaListar(pergunta, qtdetotal);
                 break;
 
-            case ALTERAR:// 5
-                alterar(pergunta, qtdetotal);
-                break;
-
-            case EXCLUIR:// 6
-                excluir(&pergunta,&qtdetotal);
-                break;
-
-            case SAIR:// 0
-                printf("Ate mais!\n");
-                break;
-
-            default:// != enum Opcoes
-                printf("Opcao invalida.\n");
+            case 20:
+                OpcRanking();
                 break;
         }
 
-    }while(opcao != 0);
+    }
+    
+    CloseWindow();
 
     salvaCSV(pergunta, qtdetotal);
 
@@ -96,4 +86,4 @@ int main(void){
     free(pergunta);
 
     return 0;
-}// main
+}
