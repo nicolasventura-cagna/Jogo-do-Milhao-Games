@@ -60,7 +60,7 @@ int inserir(Pergunta **perguntas, int *qtde){
         limparBuffer();
 
         printf("\n");//Evitar ficar tudo junto ;p
-    }// for
+    }
 
     (*qtde) += novas;
     
@@ -149,7 +149,7 @@ int pesquisar(Pergunta *pergunta, int qtde){
             "4 - Difícil\n"
             "5 - Muito Difícil\n"
             "Digite a dificuldade: ");
-            while (scanf("%d", &opcao) != 1){
+            while (scanf("%d", &dificuldade) != 1){
                 printf("Entrada invalida! Digite apenas um numero: ");
                 limparBuffer(); // Joga a letra fora do buffer
             }
