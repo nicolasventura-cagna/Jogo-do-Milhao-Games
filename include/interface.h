@@ -41,10 +41,12 @@ void OpcPerguntas(void);
 
 void OpcRanking(void);
 
+void PerguntaListar(Pergunta *pergunta, int qtde);
+
 int DesenhaBotao(Botao botao, Vector2 mouse);
 
 Botao CriarBotao(int x, int y, int largura, int altura, char *texto);
 
-void PerguntaListar(Pergunta *pergunta, int qtde);
+void ExibePergunta(Pergunta pergunta, int numero, int x, int y);
 
 #endif
