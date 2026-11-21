@@ -15,7 +15,7 @@
 
 #define POSBACK 25
 #define LARGBACK 50
-#define ALTBACK 50
+#define ALTBACK 50 //Outback XDDDDDDDDDDDDDDDDD
 
 //Mudar cores, p ficar + agradável
 #define CORFUNDO GRAY //Mudar pra imagem dps
@@ -50,7 +50,8 @@ int telaAtual = 0;//Muriel não gosta de variável global, mas é pra n dar erro
 Vector2 mouse; //Coloquei aqui pq utilizei em quase tudo, Muriel n deve reclamar, deve?
 //Qlqr coisa mudem ai
 
-int pagina = 0;//Dá problema no LOOP se dentro da função
+//int pagina = 0;//Dá problema no LOOP se dentro da função
+float scroll = 0;//Rolagem da tela
 
 //Dps da escolha de modo, tem q separar todas as coisas? pq em cada modo a vida é dif, fora dps de ganhar vida com bonus...
 
@@ -186,7 +187,7 @@ void OpcPerguntas(){
 
     //INSERIR
     if(DesenhaBotao(inserir, mouse)){
-
+        telaAtual = 11;
     }
 
     //LISTAR
@@ -196,17 +197,17 @@ void OpcPerguntas(){
 
     //PESQUISAR --- dá pra colocar na mesma tela será?
     if(DesenhaBotao(pesquisar, mouse)){
-
+        telaAtual = 13;
     }
 
     //ALTERAR
     if(DesenhaBotao(alterar, mouse)){
-
+        telaAtual = 14;
     }
 
     //EXCLUIR
     if(DesenhaBotao(excluir, mouse)){
-
+        telaAtual = 15;
     }
 
     EndDrawing();
@@ -241,61 +242,61 @@ void OpcRanking(){
  * @param qtde 
  */
 void PerguntaListar(Pergunta *pergunta, int qtde){
-    //Diminui tamanho da fonte
-    int iniciopag = pagina * PORPAG;
-    int fimpag = iniciopag + PORPAG;
-    int posy = 70;
-    /*Ex das variaveis iniciopag e fimpag:
-        Pagina = 0, iniciopag = 0, fimpag = 3 ---> Vai mostrar pergunta de n 0, 1 e 2
+    /* FALTA ARRUMAR:
+        - Quebra de linha de enunciados/alternativas mt grandes
+        - Talvez espaçamento
     */
 
-    if(fimpag > qtde){
-        fimpag = qtde;
+    Rectangle areaPergunta ={50, 80, COMPTELA - 100, ALTTELA - 160};//Área das perguntas
+
+    int espacamentoPerg = 20;
+    int alturaPerg = 220;
+    int alturatotal = qtde * (espacamentoPerg + alturaPerg); //Altura da lista
+    float limitescroll = alturatotal - areaPergunta.height;
+
+    if(limitescroll < 0){
+        limitescroll = 0;
     }
 
-    Botao back = CriarBotao(POSBACK, POSBACK, LARGBACK, ALTBACK, "<");
+    Botao back = CriarBotao(POSBACK,POSBACK, LARGBACK,ALTBACK, "<");
 
     BeginDrawing();
 
     ClearBackground(CORFUNDO);
 
     if(DesenhaBotao(back, mouse)){
-        telaAtual = 10;//Volta nas opções de perguntas
+        telaAtual = 10;//Retorna pra opções de perguntas
+        scroll = 0;
     }
 
-    DrawText("Lista de Perguntas", 300, 30, 30, CORTEXTO);
+    DrawText("Lista de Perguntas", (COMPTELA - MeasureText("Lista de Perguntas", ALTTEXTO))/2, 25, ALTTEXTO, CORTEXTO);
 
     if(qtde == 0){
-        DrawText("Nenhuma pergunta cadastrada", 300, posy, 30, CORTEXTO);
+        DrawText("Nenhuma pergunta cadastrada", (COMPTELA - MeasureText("Nenhuma pergunta cadastrada", ALTTEXTO))/2, 50, ALTTEXTO, CORTEXTO);
     }
 
-    //Fui testando valores pra ver qual ficava melhor
-    //Falta mostra a terceira pergunta
-    //Não coloquei com rolagem pq tinha q usar um bocado de func dif, fiquei com preguiça
-    for(int i = iniciopag; i<fimpag; i++){
-
-        DrawText(TextFormat("Pergunta %d", i+1), 30, posy, 24, CORTEXTO);
-        
-        DrawText(pergunta[i].enunciado, 30, posy + 50, 24, CORTEXTO);
-
-        for(int alternativas = 0; alternativas < 4; alternativas++){
-            DrawText(TextFormat("%c) %s", 'A' + alternativas, pergunta[i].alternativa[alternativas]),
-                    50, posy + 100 + (ESPACAMENTO * alternativas/2), 24, CORTEXTO);
-        }
-
-        DrawText(TextFormat("Correta: %c | Dificuldade: %d", pergunta[i].correta, pergunta[i].dificuldade),
-                300, posy + (3 * ESPACAMENTO), 24, CORTEXTO);
-
-        posy = posy + 50 + (ESPACAMENTO * PORPAG);
+    if(CheckCollisionPointRec(mouse, areaPergunta)){
+        scroll += GetMouseWheelMove() * 100;//"100" é meio q a velocidade q a lista sobe ou desce, bota um num grande p testar se quiser
     }
 
-    //Troca Página
-    if(IsKeyPressed(KEY_RIGHT) && (pagina + 1) * PORPAG < qtde){
-        pagina++;
+    if(scroll > 0){//impede a lista de descer além do começo
+        scroll = 0;
     }
-    if(IsKeyPressed(KEY_LEFT) && pagina > 0){
-        pagina--;
+
+    if(scroll < -limitescroll){//impede a lista de subir além do final
+        scroll = -limitescroll;
     }
+
+    BeginScissorMode(areaPergunta.x, areaPergunta.y, areaPergunta.width, areaPergunta.height);
+
+    for(int i=0; i<qtde; i++){
+        int posy = areaPergunta.y + (alturaPerg + espacamentoPerg) * i + scroll;
+
+        ExibePergunta(pergunta[i], i + 1, areaPergunta.x, posy);
+
+    }
+
+    EndScissorMode();
 
     EndDrawing();
 }
@@ -351,4 +352,26 @@ Botao CriarBotao(int x, int y, int largura, int altura, char *texto){
     botao.cor = CORSMOUSE;
 
     return botao;
+}
+
+void ExibePergunta(Pergunta pergunta, int numero, int x, int y){
+
+    // Título
+    DrawText(TextFormat("Pergunta %d:", numero),
+        x + 10, y + 20, ALTTEXTO, CORTEXTO);
+
+    // Enunciado
+    DrawText(pergunta.enunciado, x + 10, y + 50, ALTTEXTO, CORTEXTO);
+
+    // Alternativas
+    for(int i = 0; i < 4; i++){
+        DrawText(TextFormat("%c) %s", 'A' + i, pergunta.alternativa[i]),
+            x + 10, y + 90 + (30 * i), ALTTEXTO, CORTEXTO);
+    }
+
+    // Correta e dificuldade
+    DrawText(TextFormat("Correta: %c | Dificuldade: %d",
+        pergunta.correta, pergunta.dificuldade),
+        x + 10, y + 210, ALTTEXTO, CORTEXTO);
+
 }
