@@ -70,4 +70,8 @@ void PerguntaPesquisar(Pergunta *pergunta, int qtde);
 
 void PerguntaAlterar(Pergunta *pergunta, int qtde);
 
+int QuebraTexto(char *texto, int x, int y, int largura, int desenhar);
+
+int ExibePergunta(Pergunta pergunta, int numero, int x, int y, int largura, int desenhar);
+
 #endif
