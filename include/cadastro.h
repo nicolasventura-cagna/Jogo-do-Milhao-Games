@@ -17,4 +17,10 @@ void exibirPergunta(Pergunta pergunta);
 
 void exibeEnunciado(Pergunta pergunta);
 
+int adicionarPergunta(Pergunta **pergunta, int *qtde, Pergunta nova);
+
+int removerPergunta(Pergunta **pergunta, int *qtde, int indice);
+
+int alterarPergunta(Pergunta *pergunta, int qtde, int indice, Pergunta nova);
+
 #endif

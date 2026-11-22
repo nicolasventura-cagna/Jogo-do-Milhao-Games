@@ -77,6 +77,27 @@ int inserir(Pergunta **perguntas, int *qtde){
 }// inserir
 
 /**
+ * @brief Inserir so que pra interface, recebe pergunta pronta.
+ * 
+ * @param pergunta Pergunta pronta
+ * @param qtde 
+ * @param nova 
+ * @return int 
+ */
+int adicionarPergunta(Pergunta **pergunta, int *qtde, Pergunta nova){
+    Pergunta *temp = realloc(*pergunta, ((*qtde) + 1) * sizeof(Pergunta));
+    if(temp == NULL){
+        return 1;
+    }
+
+    *pergunta = temp;
+    (*pergunta)[*qtde] = nova;
+    (*qtde)++;
+
+    return escreveBinario(*pergunta, *qtde);
+}
+
+/**
  * @brief Lista perguntas cadastradas
  * 
  * @param perguntas  Ponteiro para vetor que possui todas perguntas
@@ -285,6 +306,16 @@ int alterar(Pergunta *pergunta, int qtde){
 }
 
 /**
+ * @brief Alterar so que para a interface.
+ * 
+ */
+int alterarPergunta(Pergunta *pergunta, int qtde, int indice, Pergunta nova){
+    pergunta[indice] = nova;
+
+    return escreveBinario(pergunta, qtde);
+}
+
+/**
  * @brief Exclui pergunta cadastrada
  * 
  * @param perguntas  Ponteiro para vetor que possui todas perguntas
@@ -333,6 +364,26 @@ int excluir(Pergunta **pergunta, int *qtde){
 
     return 0;
 }// excluir
+
+int removerPergunta(Pergunta **pergunta, int *qtde, int indice){
+    (*qtde)--;
+
+    for(int i = indice; i < (*qtde); i++){//puxa todas pra trás
+        (*pergunta)[i] = (*pergunta)[i+1];
+    }
+
+    if((*qtde) == 0){
+        free(*pergunta);
+        *pergunta = NULL;
+    }else{
+        Pergunta *temp = realloc(*pergunta, (*qtde) * sizeof(Pergunta));
+        if(temp != NULL){
+            *pergunta = temp;
+        }
+    }
+
+    return escreveBinario(*pergunta, *qtde);
+}
 
 /**
  * @brief Exibe pergunta
