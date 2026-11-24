@@ -6,12 +6,6 @@
 #include "jogo.h"
 #include "cadastro.h"
 
-#define ACERTOS_KILLSTREAK 4
-#define VIDA_MAX 5
-#define TOTAL_RODADAS 15
-#define PERGUNTAS_POR_NIVEL 3
-
-
 /**
  * @brief quanto cada pergunta vale por rodada
  * 
@@ -22,6 +16,121 @@ int valorRodada[TOTAL_RODADAS + 1] = {
     10000, 20000, 30000, 40000, 50000,
     100000, 200000, 300000, 500000, 1000000
 };
+
+/**
+ * @brief A partida inteira basicamente. :p
+ * 
+ * @param perguntas 
+ * @param qtde 
+ * @return int 
+ */
+int jogar(Pergunta *perguntas, int qtde){
+    Partida p;
+    int modo;
+    int nivel;
+    int idx;
+    int premio = -1;//premio da killstreak do round anterior  
+    int parou = 0;
+    char resposta;
+
+    if(temPerguntasSuficientes(perguntas, qtde) == 0){
+        return 0;
+    }
+
+    do{
+        printf("Escolha o modo:\n");
+        printf("0 = Facil (3 vidas e 1.0x dinheiro)\n");
+        printf("1 = Medio (2 vidas e 1.5x dinheiro)\n");
+        printf("2 = Dificil (1 vida e 2.0x dinheiro)\n");
+        printf("Modo: ");
+        scanf("%d", &modo);
+    }while(modo < 0 || modo > 2);
+
+    iniciarPartida(&p, modo);
+
+    while(p.vidas > 0 && p.rodada <= TOTAL_RODADAS && parou == 0){
+        nivel = (p.rodada - 1) / 3 + 1;//faz aquela separação de rodadas e nivel
+
+        idx = sortearPergunta(&p, perguntas, qtde, nivel);
+        if(idx == -1){
+            printf("Acabaram as perguntas do nivel %d.\n", nivel);
+            break;
+        }
+
+        //premio da killstreak: tira uma alternativa
+        if(premio == 1){
+            removerAlternativaErrada(&p, perguntas[idx]);
+        }
+
+        printf("\n--- Rodada %d/%d | Nivel %d ---\n", p.rodada, TOTAL_RODADAS, nivel);
+        printf("Vidas: %d | Dinheiro: %d | Acertos seguidos: %d\n", p.vidas, p.cash, p.acertosSeg);
+
+        if(p.bonus > 0){
+            printf("Essa pergunta vale +%.1fx!\n", p.bonus);
+        }
+
+        exibirPerguntaJogo(perguntas[idx], &p);
+
+        printf("Resposta (A-D) ou P para parar: ");
+        scanf(" %c", &resposta);
+        resposta = toupper(resposta); //btw achei esse toupper, muito bom. (De nada - G)
+
+        if(resposta == 'P'){
+            parou = 1;
+            continue;
+        }
+
+        //se digitar letra invalida ele pede de novo
+        while(resposta < 'A' || resposta > 'D' || p.altRemovida[resposta - 'A'] == 1){
+            printf("Resposta invalida. Por favor digite de novo: ");
+            scanf(" %c", &resposta);
+            resposta = toupper(resposta);
+        }
+
+        if(conferirResposta(&p, perguntas[idx], resposta) == 1){
+            printf("Acertou!\n");
+
+            premio = aplicarKillstreak(&p);
+
+            if(premio == 0){
+                printf("KILLSTREAK! Ganhou R$ 1000 de bonus!\n");
+            }
+            else if(premio == 1){
+                printf("KILLSTREAK! Uma alternativa vai ser eliminada na proxima pergunta.\n");
+            }
+            else if(premio == 2){
+                printf("KILLSTREAK! A proxima pergunta vale +0.5x de dinheiro.\n");
+            }
+            else if(premio == 3){
+                printf("KILLSTREAK! WoW! Ganhou uma vida extra!\n");
+            }
+        }
+        else{
+            printf("Errou! A correta era a %c.\n", perguntas[idx].correta);
+            premio = -1;//errou, perde o premio que tinha
+        }
+
+        p.rodada++;
+    }
+
+    //tela de fim de jogo
+    printf("\nFIM DE JOGO\n");
+
+    if(parou == 1){
+        printf("Voce parou e levou R$ %d\n", p.cash);
+    }
+    else if(p.vidas <= 0){
+        printf("Acabaram as vidas. Voce terminou com R$ %d\n", p.cash);
+    }
+    else{
+        printf("PARABENS! Terminou todas as rodadas com R$ %d\n", p.cash);
+    }
+
+    int total = p.cash;
+    liberarPartida(&p);
+
+    return total;
+}
 
 /**
  * @brief Coloca vidas e multiplicador conforme o modo e zera o resto
@@ -288,119 +397,4 @@ int temPerguntasSuficientes(Pergunta *perguntas, int qtde){
     }
 
     return 1;
-}
-
-/**
- * @brief A partida inteira basicamente. :p
- * 
- * @param perguntas 
- * @param qtde 
- * @return int 
- */
-int jogar(Pergunta *perguntas, int qtde){
-    Partida p;
-    int modo;
-    int nivel;
-    int idx;
-    int premio = -1;//premio da killstreak do round anterior  
-    int parou = 0;
-    char resposta;
-
-    if(temPerguntasSuficientes(perguntas, qtde) == 0){
-        return 0;
-    }
-
-    do{
-        printf("Escolha o modo:\n");
-        printf("0 = Facil (3 vidas e 1.0x dinheiro)\n");
-        printf("1 = Medio (2 vidas e 1.5x dinheiro)\n");
-        printf("2 = Dificil (1 vida e 2.0x dinheiro)\n");
-        printf("Modo: ");
-        scanf("%d", &modo);
-    }while(modo < 0 || modo > 2);
-
-    iniciarPartida(&p, modo);
-
-    while(p.vidas > 0 && p.rodada <= TOTAL_RODADAS && parou == 0){
-        nivel = (p.rodada - 1) / 3 + 1;//faz aquela separação de rodadas e nivel
-
-        idx = sortearPergunta(&p, perguntas, qtde, nivel);
-        if(idx == -1){
-            printf("Acabaram as perguntas do nivel %d.\n", nivel);
-            break;
-        }
-
-        //premio da killstreak: tira uma alternativa
-        if(premio == 1){
-            removerAlternativaErrada(&p, perguntas[idx]);
-        }
-
-        printf("\n--- Rodada %d/%d | Nivel %d ---\n", p.rodada, TOTAL_RODADAS, nivel);
-        printf("Vidas: %d | Dinheiro: %d | Acertos seguidos: %d\n", p.vidas, p.cash, p.acertosSeg);
-
-        if(p.bonus > 0){
-            printf("Essa pergunta vale +%.1fx!\n", p.bonus);
-        }
-
-        exibirPerguntaJogo(perguntas[idx], &p);
-
-        printf("Resposta (A-D) ou P para parar: ");
-        scanf(" %c", &resposta);
-        resposta = toupper(resposta); //btw achei esse toupper, muito bom. (De nada - G)
-
-        if(resposta == 'P'){
-            parou = 1;
-            continue;
-        }
-
-        //se digitar letra invalida ele pede de novo
-        while(resposta < 'A' || resposta > 'D' || p.altRemovida[resposta - 'A'] == 1){
-            printf("Resposta invalida. Por favor digite de novo: ");
-            scanf(" %c", &resposta);
-            resposta = toupper(resposta);
-        }
-
-        if(conferirResposta(&p, perguntas[idx], resposta) == 1){
-            printf("Acertou!\n");
-
-            premio = aplicarKillstreak(&p);
-
-            if(premio == 0){
-                printf("KILLSTREAK! Ganhou R$ 1000 de bonus!\n");
-            }
-            else if(premio == 1){
-                printf("KILLSTREAK! Uma alternativa vai ser eliminada na proxima pergunta.\n");
-            }
-            else if(premio == 2){
-                printf("KILLSTREAK! A proxima pergunta vale +0.5x de dinheiro.\n");
-            }
-            else if(premio == 3){
-                printf("KILLSTREAK! WoW! Ganhou uma vida extra!\n");
-            }
-        }
-        else{
-            printf("Errou! A correta era a %c.\n", perguntas[idx].correta);
-            premio = -1;//errou, perde o premio que tinha
-        }
-
-        p.rodada++;
-    }
-
-    //tela de fim de jogo
-    printf("\nFIM DE JOGO\n");
-
-    if(parou == 1){
-        printf("Voce parou e levou R$ %d\n", p.cash);
-    }
-    else if(p.vidas <= 0){
-        printf("Acabaram as vidas. Voce terminou com R$ %d\n", p.cash);
-    }
-    else{
-        printf("PARABENS! Terminou todas as rodadas com R$ %d\n", p.cash);
-    }
-
-    int total = p.cash;
-    liberarPartida(&p);
-
-    return total;
 }
