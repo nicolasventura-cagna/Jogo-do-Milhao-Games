@@ -3,6 +3,11 @@
 
 #include "pergunta.h"
 
+#define ACERTOS_KILLSTREAK 4
+#define VIDA_MAX 5
+#define TOTAL_RODADAS 15
+#define PERGUNTAS_POR_NIVEL 3
+
 typedef struct {
     int modo;
     int vidas;
