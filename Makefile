@@ -38,7 +38,9 @@ SRCS = main.c \
        src/jogo.c \
        src/limpabuffer.c \
        src/interface.c \
-       src/minigames.c
+       src/minigames.c \
+       src/modperguntas.c \
+       src/jogatina.c 
 
 # Headers da pasta include
 HEADERS = $(wildcard include/*.h)
