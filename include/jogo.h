@@ -20,6 +20,7 @@ typedef struct {
     int *usadas;
     int qtdUsadas;
     int altRemovida[4];
+    int tiroDuplo; //1 = a proxima conferirResposta vale metade (tiro duplo)
 } Partida;
 
 void iniciarPartida(Partida *p, int modo);
@@ -42,3 +43,4 @@ int jogar(Pergunta *perguntas, int qtde);
 
 #endif
 
+ 

@@ -21,8 +21,13 @@
 //Mudar cores, p ficar + agradável
 #define CORFUNDO GRAY //Mudar pra imagem dps
 #define CORTEXTO WHITE
-#define CORCMOUSE DARKBLUE //Cor botão com mouse
-#define CORSMOUSE BLUE     //Cor botão sem mouse
+#define CORCMOUSE (Color){200, 30, 120, 255} //Cor das alternativas com mouse (roxo/rosa estilo neon)
+#define CORSMOUSE (Color){70, 20, 120, 255}   //Cor das alternativas sem mouse
+
+//Cores neon dos botões
+#define NEON_ROSA    (Color){255, 46, 151, 255}
+#define NEON_CIANO   (Color){0, 229, 255, 255}
+#define NEON_LARANJA (Color){255, 150, 30, 255}
 
 #define ALTTEXTO 32 //Altura do texto (tamanho da fonte, a default)
 
@@ -90,7 +95,29 @@ void DesenhaFundo(void);
 
 void LiberarRecursos(void);
 
+//Personagens (universitários) e efeitos sonoros
+#define QTD_PERSONAGENS 6
+
+#define SOM_ACERTO 0
+#define SOM_KILLSTREAK 1
+#define SOM_VITORIA 2
+
+const char *NomePersonagem(int indice);
+
+void DesenhaPersonagem(int indice, Rectangle destino);
+
+void TocarSom(int qual);
+
 Botao CriarBotao(int x, int y, int largura, int altura, const char *texto);
+
+//Fonte do jogo (assets/fonte.ttf). Se o arquivo não existir, usa a fonte padrão do raylib
+void DesenhaTexto(const char *texto, int x, int y, int tam, Color cor);
+
+int MedeTexto(const char *texto, int tam);
+
+//Daqui pra baixo, todo DrawText/MeasureText do jogo passa a usar a fonte nova, sem mudar os outros arquivos
+#define DrawText(texto, x, y, tam, cor) DesenhaTexto(texto, x, y, tam, cor)
+#define MeasureText(texto, tam) MedeTexto(texto, tam)
 
 void DesenhaCaixa(CaixaTexto *caixa, Vector2 mouse);
 
@@ -130,17 +157,5 @@ void OpcJogarModo(Pergunta *perguntas, int qtde, Partida *partida);
 void WinLose(Partida partida);
 
 void ReiniciarJogatina(void);
-
-//JOGATINA.C
-
-//A FAZER:
-
-/*
-void JogoMinigame();
-
-void JogoAjuda();//diferenciar
-*/
-
-//A FAZER
 
 #endif

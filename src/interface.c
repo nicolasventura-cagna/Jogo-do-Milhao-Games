@@ -47,6 +47,19 @@ static Texture2D fundoJogo;//versão desfocada e escura (todas as outras telas)
 static Music musica;
 static int mudo = 0;//1 = música mutada
 
+//Personagens dos universitários (assets/personagens/p1.png ... p6.png) e efeitos sonoros
+#define QTD_SONS 3
+
+static Texture2D personagem[QTD_PERSONAGENS];
+static const char *nomePersonagem[QTD_PERSONAGENS] = {"Jebediah Kerman", "Mario", "Leon Kennedy", "Steve", "Sonic", "Pikachu"};
+static Sound som[QTD_SONS];
+
+//Fonte do jogo (assets/fonte.ttf)
+#define ESP_FONTE 0.05f //espaço entre letras, proporcional ao tamanho
+#define FATOR_FONTE 0.8f //a Bungee é larga: diminui o tamanho pra caber nos botões (use 1.0f em fonte normal)
+static Font fonte;
+static int fonteOk = 0;
+
 //Enrico, para de colocar "// for (ou seja la oq)". Grata
 //bom saber que não sou o unico que não gosta.
 
@@ -55,6 +68,22 @@ static int mudo = 0;//1 = música mutada
  * Se algum arquivo não existir, o jogo roda normal, só sem ele
  */
 void CarregarRecursos(){
+    //fonte: letras de 32 a 255 (inclui acentos e ç)
+    if(FileExists("assets/fonte.ttf")){
+        int codigos[224];
+
+        for(int i = 0; i < 224; i++){
+            codigos[i] = 32 + i;
+        }
+
+        fonte = LoadFontEx("assets/fonte.ttf", 64, codigos, 224);
+
+        if(IsFontValid(fonte)){
+            SetTextureFilter(fonte.texture, TEXTURE_FILTER_BILINEAR);//deixa suave ao redimensionar
+            fonteOk = 1;
+        }
+    }
+
     fundo = LoadTexture("assets/fundo.png");
     fundoJogo = LoadTexture("assets/fundo_jogo.png");
 
@@ -65,6 +94,14 @@ void CarregarRecursos(){
         SetMusicVolume(musica, 0.5f);
         PlayMusicStream(musica);
     }
+
+    for(int i = 0; i < QTD_PERSONAGENS; i++){
+        personagem[i] = LoadTexture(TextFormat("assets/personagens/p%d.png", i + 1));
+    }
+
+    som[SOM_ACERTO] = LoadSound("assets/sfx_acerto.ogg");
+    som[SOM_KILLSTREAK] = LoadSound("assets/sfx_killstreak.ogg");
+    som[SOM_VITORIA] = LoadSound("assets/sfx_vitoria.ogg");
 }
 
 /**
@@ -139,6 +176,11 @@ void DesenhaFundo(){
  * 
  */
 void LiberarRecursos(){
+    if(fonteOk){
+        UnloadFont(fonte);
+        fonteOk = 0;
+    }
+
     if(IsTextureValid(fundo)){
         UnloadTexture(fundo);
     }
@@ -149,6 +191,70 @@ void LiberarRecursos(){
 
     if(IsMusicValid(musica)){
         UnloadMusicStream(musica);
+    }
+
+    for(int i = 0; i < QTD_PERSONAGENS; i++){
+        if(IsTextureValid(personagem[i])){
+            UnloadTexture(personagem[i]);
+        }
+    }
+
+    for(int i = 0; i < QTD_SONS; i++){
+        if(IsSoundValid(som[i])){
+            UnloadSound(som[i]);
+        }
+    }
+}
+
+/**
+ * @brief Nome do personagem (universitário)
+ * 
+ * @param indice 0 a QTD_PERSONAGENS - 1
+ */
+const char *NomePersonagem(int indice){
+    if(indice < 0 || indice >= QTD_PERSONAGENS){
+        return "";
+    }
+
+    return nomePersonagem[indice];
+}
+
+/**
+ * @brief Desenha o retrato do personagem dentro do retângulo
+ * Se a imagem não existir, desenha um quadrado com a inicial do nome
+ * 
+ * @param indice 0 a QTD_PERSONAGENS - 1
+ * @param destino Onde desenhar
+ */
+void DesenhaPersonagem(int indice, Rectangle destino){
+    char inicial[2] = "?";
+
+    if(indice < 0 || indice >= QTD_PERSONAGENS){
+        return;
+    }
+
+    if(IsTextureValid(personagem[indice])){
+        DrawTexturePro(personagem[indice],
+            (Rectangle){0, 0, personagem[indice].width, personagem[indice].height},
+            destino, (Vector2){0, 0}, 0.0f, WHITE);
+        return;
+    }
+
+    //sem imagem: quadrado cinza com a inicial
+    inicial[0] = nomePersonagem[indice][0];
+
+    DrawRectangleRounded(destino, 0.2f, 8, DARKGRAY);
+    DrawText(inicial, destino.x + (destino.width - MeasureText(inicial, 60))/2,
+             destino.y + (destino.height - 60)/2, 60, WHITE);
+}
+
+/**
+ * @brief Toca um efeito sonoro (SOM_ACERTO, SOM_KILLSTREAK ou SOM_VITORIA)
+ * O botão de mudo também silencia os efeitos
+ */
+void TocarSom(int qual){
+    if(qual >= 0 && qual < QTD_SONS && IsSoundValid(som[qual])){
+        PlaySound(som[qual]);
     }
 }
 
@@ -271,10 +377,26 @@ void OpcPerguntas(){
 
 /**
  * @brief Usuário clicou em Ranking, no menu
- * 
+ * telaAtual = 20
  */
 void OpcRanking(){
+    static Registro vet[RANKING_MAX];
+    static int qtde = 0;
+    static int carregado = 0;//lê o arquivo só uma vez por visita à tela
+
+    const char *modos[3] = {"Fácil", "Médio", "Difícil"};
+    int larg = 800;
+    int x = (COMPTELA - larg) / 2;
+    int y = 170;
+    int linha = 45;
+    Color cor;
+
     Botao back = CriarBotao(POSBACK, POSBACK, MEDBACK, MEDBACK, "<");
+
+    if(!carregado){
+        qtde = carregarRanking(vet, RANKING_MAX);
+        carregado = 1;
+    }
 
     BeginDrawing();
 
@@ -282,10 +404,41 @@ void OpcRanking(){
 
     //BACK
     if(DesenhaBotao(back, mouse)){
+        carregado = 0;//na próxima visita lê de novo (pode ter novo recorde)
         telaAtual = 0;
     }
 
-    DrawText("Ranking", 100, 100, 50, RED);
+    DrawText("RANKING", (COMPTELA - MeasureText("RANKING", 50))/2, 70, 50, CORTEXTO);
+
+    if(qtde == 0){
+        DrawText("Ninguém no ranking ainda. Termine uma partida!",
+                 (COMPTELA - MeasureText("Ninguém no ranking ainda. Termine uma partida!", ALTTEXTO))/2,
+                 y + 40, ALTTEXTO, CORTEXTO);
+    }else{
+        DrawRectangleRounded((Rectangle){x - 20, y - 10, larg + 40, linha * (qtde + 1) + 20}, 0.05f, 8, Fade(BLACK, 0.6f));
+
+        //cabeçalho
+        DrawText("#", x, y, 28, YELLOW);
+        DrawText("Nome", x + 70, y, 28, YELLOW);
+        DrawText("Modo", x + 400, y, 28, YELLOW);
+        DrawText("Dinheiro", x + 580, y, 28, YELLOW);
+
+        for(int i = 0; i < qtde; i++){
+            cor = CORTEXTO;
+            if(i == 0){
+                cor = GOLD;
+            }else if(i == 1){
+                cor = LIGHTGRAY;
+            }else if(i == 2){
+                cor = ORANGE;
+            }
+
+            DrawText(TextFormat("%d", i + 1), x, y + (i + 1) * linha, 28, cor);
+            DrawText(vet[i].nome, x + 70, y + (i + 1) * linha, 28, cor);
+            DrawText(modos[vet[i].modo >= 0 && vet[i].modo <= 2 ? vet[i].modo : 0], x + 400, y + (i + 1) * linha, 28, cor);
+            DrawText(TextFormat("R$ %d", vet[i].cash), x + 580, y + (i + 1) * linha, 28, cor);
+        }
+    }
 
     EndDrawing();
 }
@@ -298,23 +451,64 @@ void OpcRanking(){
  * @return int 
  */
 int DesenhaBotao(Botao botao, Vector2 mouse){
-    //Como tudo ta dentro de um loop, verifica constantemente
-    botao.cor = CheckCollisionPointRec(mouse, botao.retangulo) ? CORCMOUSE : CORSMOUSE;//Operador Terciário (? acho q é esse o nome), if de 2 opções
+    Rectangle r = botao.retangulo;
+    int emcima = CheckCollisionPointRec(mouse, r);
+    Color neon = emcima ? NEON_CIANO : NEON_ROSA;      //camada de fora
+    Color neon2 = emcima ? NEON_ROSA : NEON_LARANJA;   //camada de dentro
 
-    DrawRectangleRounded(botao.retangulo, 0.3f, 8, botao.cor);
+    //brilho em volta (3 contornos que vão sumindo)
+    for(int i = 3; i >= 1; i--){
+        DrawRectangleRoundedLinesEx((Rectangle){r.x - i * 3, r.y - i * 3, r.width + i * 6, r.height + i * 6},
+                                    0.3f, 8, 3, Fade(neon, (emcima ? 0.20f : 0.12f) * (4 - i) / 3.0f));
+    }
 
-    DrawText(botao.palavra.caracteres,
-            botao.palavra.posx,
-            botao.palavra.posy,
-            ALTTEXTO, CORTEXTO);
+    //fundo escuro com um tom da cor neon
+    DrawRectangleRounded(r, 0.3f, 8, Fade(BLACK, 0.7f));
+    DrawRectangleRounded(r, 0.3f, 8, Fade(neon, emcima ? 0.25f : 0.10f));
 
-    if(CheckCollisionPointRec(mouse, botao.retangulo)){
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-            return 1;//if dá true e muda tela
-        }
+    //camada 1: borda neon de fora
+    DrawRectangleRoundedLinesEx(r, 0.3f, 8, 3, neon);
+
+    //camada 2: borda fina de dentro
+    DrawRectangleRoundedLinesEx((Rectangle){r.x + 5, r.y + 5, r.width - 10, r.height - 10}, 0.3f, 8, 1.5f, Fade(neon2, 0.9f));
+
+    //texto com sombra colorida (efeito neon)
+    DrawText(botao.palavra.caracteres, botao.palavra.posx + 2, botao.palavra.posy + 2, ALTTEXTO, Fade(neon, 0.7f));
+    DrawText(botao.palavra.caracteres, botao.palavra.posx, botao.palavra.posy, ALTTEXTO, CORTEXTO);
+
+    if(emcima && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+        return 1;//if dá true e muda tela
     }
 
     return 0;
+}
+
+/**
+ * @brief Escreve texto com a fonte do jogo (ou a padrão, se assets/fonte.ttf não existir)
+ * É o que o DrawText vira depois do interface.h (por isso o (DrawText) com parênteses)
+ */
+void DesenhaTexto(const char *texto, int x, int y, int tam, Color cor){
+    if(fonteOk){
+        float t = tam * FATOR_FONTE;
+
+        //y sobe/desce um pouco pra manter o texto centralizado na mesma altura de antes
+        DrawTextEx(fonte, texto, (Vector2){x, y + (tam - t) / 2}, t, t * ESP_FONTE, cor);
+    }else{
+        (DrawText)(texto, x, y, tam, cor);
+    }
+}
+
+/**
+ * @brief Largura do texto na fonte do jogo (vira o MeasureText)
+ */
+int MedeTexto(const char *texto, int tam){
+    if(fonteOk){
+        float t = tam * FATOR_FONTE;
+
+        return (int)MeasureTextEx(fonte, texto, t, t * ESP_FONTE).x;
+    }
+
+    return (MeasureText)(texto, tam);
 }
 
 /**

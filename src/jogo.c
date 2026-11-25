@@ -162,6 +162,7 @@ void iniciarPartida(Partida *p, int modo){
     p->rodada = 1;//pra começar na rodada 1
     p->usadas = NULL;//sem sorteio ainda
     p->qtdUsadas = 0;
+    p->tiroDuplo = 0;
 
     //Zero alternativas removidas ainda
     p->altRemovida[0] = 0;
@@ -255,12 +256,19 @@ int sortearPergunta(Partida *p, Pergunta *perguntas, int qtde, int nivel){
  */
 int conferirResposta(Partida *p, Pergunta pergunta, char resposta){
     int valor;
+    int duplo = p->tiroDuplo;//tiro duplo: acertando, vale metade
+
+    p->tiroDuplo = 0;//vale só pra essa pergunta
 
     if(toupper(resposta) == pergunta.correta){
         if(p->rodada == TOTAL_RODADAS){
             valor = valorRodada[p->rodada];//a do milhao nao tem multiplicador
         }else{
             valor = valorRodada[p->rodada] * (p->multiplicador + p->bonus);
+        }
+
+        if(duplo == 1){
+            valor = valor / 2;
         }
 
         p->cash = valor + p->extraCash;

@@ -176,3 +176,69 @@ int salvaCSV(Pergunta *pergunta, int qtd){
     fclose(arq);
     return 0;
 }// exportaCSV
+
+/**
+ * @brief Lê o ranking do arquivo (já ordenado do maior pro menor)
+ * 
+ * @param vet Vetor onde os registros serão colocados
+ * @param max Tamanho do vetor
+ * @return int Quantidade de registros lidos (0 se o arquivo não existir)
+ */
+int carregarRanking(Registro *vet, int max){
+    size_t lidos;
+    FILE *arq = fopen("ranking.bin", "rb");
+    if(arq == NULL){
+        return 0;
+    }
+
+    lidos = fread(vet, sizeof(Registro), (size_t)max, arq);
+
+    fclose(arq);
+
+    return (int)lidos;
+}// carregarRanking
+
+/**
+ * @brief Coloca o jogador no ranking, na posição certa. Guarda só os RANKING_MAX melhores
+ * 
+ * @param novo Jogador a inserir
+ * @return int Sucesso (0) ou Falha (1)
+ */
+int salvarRanking(Registro novo){
+    Registro vet[RANKING_MAX + 1];
+    int qtde = carregarRanking(vet, RANKING_MAX);
+    int pos = qtde;//se não for maior que ninguém, vai pro final
+    FILE *arq;
+
+    for(int i = 0; i < qtde; i++){
+        if(novo.cash > vet[i].cash){
+            pos = i;
+            break;
+        }
+    }
+
+    for(int i = qtde; i > pos; i--){//abre espaço
+        vet[i] = vet[i-1];
+    }
+
+    vet[pos] = novo;
+    qtde++;
+
+    if(qtde > RANKING_MAX){//o último cai fora
+        qtde = RANKING_MAX;
+    }
+
+    arq = fopen("ranking.bin", "wb");
+    if(arq == NULL){
+        return 1;
+    }
+
+    if(fwrite(vet, sizeof(Registro), (size_t)qtde, arq) != (size_t)qtde){
+        fclose(arq);
+        return 1;
+    }
+
+    fclose(arq);
+
+    return 0;
+}// salvarRanking
