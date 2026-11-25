@@ -1,62 +1,168 @@
-/*
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include "minigames.h"
-#include "jogo.h"
+#include "interface.h"
 
+EstadoMinigame minigame = {0};
 
-//NÃO FINALIZADO
-//Interface Gráfica
+//Guarda o resultado e volta pra tela das perguntas (a jogatina aplica a ajuda)
+static void Resultado(int vitoria){
+    minigame.vitoria = vitoria;
+    minigame.pendente = 1;
+    telaAtual = 2;
+}
 
-int ParImpar(int *modo){
-    //srand(time(NULL)); -- Já tem na main
+/**
+ * @brief 2 minigames, parimpar e jokempo
+ * telaAtual = 3
+ */
+void Minigame(void){
+    int posx = (COMPTELA / 2);
+    int tecla;
+    int res;
+    const char *nomes[3] = {"Pedra", "Papel", "Tesoura"};
 
-    int c;
-    int numusu, nummaq;
-    int soma;
-    int vitorias = 0, derrotas = 0; //pra modos com +1 vez
-    char parimp;
+    Botao par = CriarBotao(posx - ESPACAMENTO - 65, 100, 125, 50, "PAR");
 
-    do{
-        printf("Par ou impar? Digite 'P' ou 'I': ");
-        scanf(" %c", &parimp);
+    Botao impar = CriarBotao(posx + ESPACAMENTO, 100, 125, 50, "ÍMPAR");
 
-        parimp = toupper(parimp);
+    Botao continuar = CriarBotao(posx - 100, ALTTELA - 100, 200, 50, "Continuar");
 
-    }while (parimp != 'P' && parimp != 'I');
+    Botao novamente = CriarBotao(posx - 125, ALTTELA - 100, 250, 50, "Jogar de novo");
 
-    do {
-        printf("Indique o valor que vai jogar, de zero a dez: ");
+    Botao jok[3];
+    for(int i = 0; i < 3; i++){
+        jok[i] = CriarBotao(posx - 260 + i * 180, 100, 160, 50, nomes[i]);
+    }
 
-        if (scanf("%d", &numusu) != 1) {
-            printf("Entrada invalida! Digite um numero.\n");
+    BeginDrawing();
 
-            limparBuffer();//Para loop qnd acha enter
+    DesenhaFundo();
 
-            numusu = -1;//continua loop se scanf inválido
+    //PAR OU ÍMPAR
+    if(minigame.escolha == 1){
+        if(minigame.parimp == '\0'){
+            DrawText("Par ou Ímpar?", posx - (MeasureText("Par ou Ímpar", ALTTEXTO))/2, 50, ALTTEXTO, CORTEXTO);
+
+            if(DesenhaBotao(par, mouse)){
+                minigame.parimp = 'P';
+                minigame.opcao = 1;
+            }
+            if(DesenhaBotao(impar, mouse)){
+                minigame.parimp = 'I';
+                minigame.opcao = 1;
+            }
         }
 
-    }while (numusu < 0 || numusu > 10);
+        if(minigame.numusu == -1 && minigame.opcao == 1){
+            DrawText("Escolha um número de zero (0) a nove (9):", 50, 150, ALTTEXTO, CORTEXTO);
+            while((tecla = GetCharPressed()) > 0){
+                if(tecla >= '0' && tecla <= '9'){
+                    minigame.numusu = tecla - '0';
+                    minigame.rangenumero = 1;
+                }
+            }
+        }
 
-    nummaq = rand() % 11;//Número da máquina vai de 0 a 10
+        if(minigame.rangenumero == 1 && minigame.maquina == 0){
+            minigame.nummaq = rand() % 10;//Número da máquina vai de 0 a 9
 
-    soma = nummaq + numusu;
+            minigame.soma = minigame.nummaq + minigame.numusu;
 
-    printf("Numero da maquina: %d \nSeu numero: %d \n\n  Soma: %d\n", nummaq,numusu,soma);
+            minigame.maquina = 1;
+        }
 
-    if((parimp == 'P' && soma % 2 == 0) || (parimp == 'I' && soma % 2 != 0)){
-        printf("VOCE GANHOU, parabens!\n\n");
-        vitorias++;
-    }else{
-        printf("VOCE PERDEU, sem ajuda para você!\n\n");
-        derrotas++;
+        if(minigame.rangenumero == 1 && minigame.maquina == 1){
+
+            DrawText(TextFormat("Numero da maquina: %d | Seu numero: %d | Soma: %d | Sua escolha: %s",
+                                minigame.nummaq, minigame.numusu, minigame.soma, minigame.parimp == 'P' ? "Par" : "Ímpar"),
+                                50, 200, 28, CORTEXTO);
+
+            if((minigame.parimp == 'P' && minigame.soma % 2 == 0) || (minigame.parimp == 'I' && minigame.soma % 2 != 0)){
+                DrawText("VOCÊ GANHOU, conseguiu uma ajuda!", 50, 300, ALTTEXTO, CORTEXTO);
+                if(DesenhaBotao(continuar, mouse)){
+                    Resultado(1);
+                }
+            }else{
+                DrawText("VOCÊ PERDEU, sem ajuda!", 50, 300, ALTTEXTO, CORTEXTO);
+                if(DesenhaBotao(continuar, mouse)){
+                    Resultado(0);
+                }
+            }
+        }
     }
-    
+
+    //JOKEMPO
+    if(minigame.escolha == 2){
+        if(minigame.jokusu == -1){
+            DrawText("Jokempo! Escolha:", posx - (MeasureText("Jokempo! Escolha:", ALTTEXTO))/2, 50, ALTTEXTO, CORTEXTO);
+
+            for(int i = 0; i < 3; i++){
+                if(DesenhaBotao(jok[i], mouse)){
+                    minigame.jokusu = i;
+                    minigame.jokmaq = rand() % 3;
+                }
+            }
+        }else{
+            //0 = empate, 1 = jogador ganha, 2 = máquina ganha
+            res = (minigame.jokusu - minigame.jokmaq + 3) % 3;
+
+            DrawText(TextFormat("Você: %s | Máquina: %s", nomes[minigame.jokusu], nomes[minigame.jokmaq]),
+                                50, 200, 28, CORTEXTO);
+
+            if(res == 0){
+                DrawText("EMPATE! Jogue de novo.", 50, 300, ALTTEXTO, CORTEXTO);
+                if(DesenhaBotao(novamente, mouse)){
+                    minigame.jokusu = -1;
+                }
+            }else if(res == 1){
+                DrawText("VOCÊ GANHOU, conseguiu uma ajuda!", 50, 300, ALTTEXTO, CORTEXTO);
+                if(DesenhaBotao(continuar, mouse)){
+                    Resultado(1);
+                }
+            }else{
+                DrawText("VOCÊ PERDEU, sem ajuda!", 50, 300, ALTTEXTO, CORTEXTO);
+                if(DesenhaBotao(continuar, mouse)){
+                    Resultado(0);
+                }
+            }
+        }
+    }
+
+    EndDrawing();
 }
 
-int Jokempo(){
-    //ENRICO
+/**
+ * @brief Prepara um minigame novo. Limpa os dados da jogada anterior,
+ * mas mantém quais já foram usados
+ * @param qual 1 = par/impar, 2 = jokempo
+ */
+void IniciarMinigame(int qual){
+    int jaPI = minigame.parimpar;
+    int jaJK = minigame.jokempo;
+
+    minigame = (EstadoMinigame){0};
+
+    minigame.parimpar = jaPI;
+    minigame.jokempo = jaJK;
+
+    minigame.escolha = qual;
+    minigame.numusu = -1;
+    minigame.jokusu = -1;
+    minigame.parimp = '\0';
+
+    //marca como usado já na entrada, não dá pra entrar 2x
+    if(qual == 1){
+        minigame.parimpar = 1;
+    }else{
+        minigame.jokempo = 1;
+    }
 }
-*/
+
+void ReiniciarMinigame(void){
+    minigame = (EstadoMinigame){0};
+
+    minigame.numusu = -1;
+    minigame.jokusu = -1;
+    minigame.parimp = '\0';
+}

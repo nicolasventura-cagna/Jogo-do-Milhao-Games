@@ -7,6 +7,7 @@
 #include "cadastro.h"
 #include "jogo.h"
 #include "interface.h"
+#include "minigames.h"
 #include "limpabuffer.h"
 
 #define LARGURA 1280
@@ -37,6 +38,7 @@ int main(void){
         }
     }
 
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);//necessario pro botao Maximizar
     InitWindow(LARGURA, ALTURA, NOME);
     InitAudioDevice();      
     CarregarRecursos();     
@@ -63,6 +65,10 @@ int main(void){
 
             case 2:
                 JogoPerg(pergunta, qtdetotal, &partida);
+                break;
+
+            case 3:
+                Minigame();
                 break;
 
 

@@ -168,9 +168,22 @@ void Menu(){
 
     Botao sair = CriarBotao(posx, posy + 3 * ESPACAMENTO, LARGRET, ALTRET, "Sair");
 
+    //Maximizar: canto superior direito, ao lado do botao de mudo
+    Botao maximiza = CriarBotao(COMPTELA - POSBACK - MEDBACK - 15 - 190, POSBACK, 190, MEDBACK,
+                                IsWindowMaximized() ? "Restaurar" : "Maximizar");
+
     BeginDrawing();
 
     DesenhaFundo();
+
+    //MAXIMIZAR / RESTAURAR (sem tela cheia)
+    if(DesenhaBotao(maximiza, mouse)){
+        if(IsWindowMaximized()){
+            RestoreWindow();
+        }else{
+            MaximizeWindow();
+        }
+    }
 
     //JOGAR
     if(DesenhaBotao(jogar, mouse)){

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "jogo.h"
 #include "minigames.h"
 #include "interface.h"
@@ -7,7 +8,18 @@
 
 #define LARGBLOCO 1000 //largura do bloco central do jogo
 
+//Estado do menu de ajuda (os minigames ficam em minigame, em minigames.c)
+typedef struct{
+    int aberta;      //painel de ajuda aberto
+    int usouUniv;    //1 = ja usou universitarios nessa partida
+    int usouRemover; //1 = ja usou remover pergunta nessa partida
+    char msg[100];   //aviso da ultima ajuda
+}EstadoAjuda;
+
 static EstadoJogo estado = {0};
+static EstadoAjuda ajuda = {0};
+
+int jaForam(Partida *p, int indice);//está em jogo.c
 
 //Devolve o nivel que nao tem perguntas suficientes (0 = tudo certo)
 static int NivelFaltando(Pergunta *perguntas, int qtde){
@@ -40,10 +52,61 @@ static void ComecarJogo(Pergunta *perguntas, int qtde, Partida *partida, int mod
     }
 
     msg[0] = '\0';
-    ReiniciarJogatina();
+    ReiniciarJogatina();//zera estado, ajudas e minigames da partida anterior
     liberarPartida(partida);//limpa a partida anterior (free(NULL) é seguro)
     iniciarPartida(partida, modo);
     telaAtual = 2;
+}
+
+//Botão do painel de ajuda: se já foi usado fica cinza e não clica
+static int BotaoAjuda(Botao botao, int usada){
+    if(!usada){
+        return DesenhaBotao(botao, mouse);
+    }
+
+    DrawRectangleRounded(botao.retangulo, 0.3f, 8, DARKGRAY);
+    DrawText(botao.palavra.caracteres, botao.palavra.posx, botao.palavra.posy, ALTTEXTO, LIGHTGRAY);
+
+    return 0;
+}
+
+//Dá pra trocar a pergunta? Precisa sobrar uma pra troca + as das rodadas que faltam no nivel
+static int PodeRemoverPergunta(Partida *partida, Pergunta *perguntas, int qtde, int nivel){
+    int livres = 0;
+    int rodadasFaltando = 2 - ((partida->rodada - 1) % 3);//rodadas do nivel depois dessa
+
+    for(int i = 0; i < qtde; i++){
+        if(perguntas[i].dificuldade == nivel && jaForam(partida, i) == 0){
+            livres++;
+        }
+    }
+
+    return livres >= 1 + rodadasFaltando;
+}
+
+//3 universitários dão palpite, quanto mais dificil o nivel mais eles erram
+static void ConsultarUniversitarios(Partida *partida, Pergunta pergunta, int nivel){
+    char op[3];
+    int chance = 90 - nivel * 10;//nivel 1 = 80%, nivel 5 = 40%
+    int cand[4];
+    int total;
+
+    for(int k = 0; k < 3; k++){
+        if(rand() % 100 < chance){
+            op[k] = pergunta.correta;
+        }else{
+            total = 0;
+            for(int i = 0; i < 4; i++){
+                if('A' + i != pergunta.correta && partida->altRemovida[i] == 0){
+                    cand[total] = i;
+                    total++;
+                }
+            }
+            op[k] = (total > 0) ? 'A' + cand[rand() % total] : pergunta.correta;
+        }
+    }
+
+    sprintf(ajuda.msg, "Universitarios: %c, %c e %c", op[0], op[1], op[2]);
 }
 
 /**
@@ -98,10 +161,7 @@ void OpcJogarModo(Pergunta *perguntas, int qtde, Partida *partida){
 
 /**
  * @brief Tela do jogo todo, basicamente, mostra as perguntas
- * 
- * @param perguntas 
- * @param qtde 
- * @param modo 
+ * telaAtual = 2
  */
 void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
     int mx = (COMPTELA - LARGBLOCO) / 2;//margem esquerda do bloco central
@@ -117,6 +177,9 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
 
     Botao continuar = CriarBotao(COMPTELA - mx - LARGRET, ALTTELA - 90, LARGRET, ALTRET, "Continuar");
 
+    //Ajuda: embaixo, depois da zona do Parar (SIM/NAO ocupam de mx até mx + 220)
+    Botao ajudaBtn = CriarBotao(mx + 250, ALTTELA - 90, 150, ALTRET, "Ajuda");
+
     BeginDrawing();
 
     DesenhaFundo();
@@ -130,24 +193,33 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
             return;
         }
 
-        //USUÁRIO CLICA EM BACK
+        //USUÁRIO CLICA EM BACK (fecha a ajuda pra nunca ficar uma em cima da outra)
         if(DesenhaBotao(back, mouse)){
             estado.saida = 1;
+            ajuda.aberta = 0;
         }
 
+        //USUÁRIO DECIDE SE QUER SAIR
         if(estado.saida == 1){
             Botao sim = CriarBotao(mx, ALTTELA - 90, 100, ALTRET, "SIM");
             Botao nao = CriarBotao(mx + 120, ALTTELA - 90, 100, ALTRET, "NAO");
 
-            DrawText("Realmente deseja parar?", mx, ALTTELA - 130, 24, CORTEXTO);
+            DrawText("Parar agora leva so metade do dinheiro. Deseja parar?", mx, ALTTELA - 130, 24, CORTEXTO);
 
             if(DesenhaBotao(sim, mouse)){
                 estado.fimDeJogo = 2;//Desistiu
-                telaAtual = 9;//vai pra tela de fim e leva o dinheiro
+                partida->cash = partida->cash / 2;//desistir leva so metade
+                telaAtual = 9;//vai pra tela de fim
             }
             if(DesenhaBotao(nao, mouse)){
                 estado.saida = 0;
             }
+        }
+
+        //USUÁRIO CLICA EM AJUDA (só antes de responder) - abre/fecha o painel
+        if(estado.respostaProcessada == 0 && DesenhaBotao(ajudaBtn, mouse)){
+            ajuda.aberta = !ajuda.aberta;
+            estado.saida = 0;
         }
 
         //COMEÇO
@@ -182,6 +254,18 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
 
         nivel = (partida->rodada - 1) / 3 + 1;
 
+        //VOLTOU DE UM MINIGAME: aplica o resultado (só uma vez)
+        if(minigame.pendente == 1){
+            minigame.pendente = 0;
+
+            if(minigame.vitoria == 1){
+                removerAlternativaErrada(partida, perguntas[idx]);
+                strcpy(ajuda.msg, "Ganhou! Uma alternativa foi eliminada.");
+            }else{
+                strcpy(ajuda.msg, "Perdeu no minigame. Sem ajuda.");
+            }
+        }
+
         //Barra de status, alinhada com o bloco
         DrawText(TextFormat("Rodada %d/%d | Nivel %d", partida->rodada, TOTAL_RODADAS, nivel), mx, 25, 24, CORTEXTO);
 
@@ -199,7 +283,7 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
         for(int i = 0; i < 4; i++){
             Rectangle ret = {mx + (largAlt + 20) * (i % 2), posy + 120 * (i / 2), largAlt, 100};
             int removida = partida->altRemovida[i];
-            int clicavel = !removida && estado.respostaProcessada == 0 && estado.saida == 0;
+            int clicavel = !removida && estado.respostaProcessada == 0 && estado.saida == 0 && !ajuda.aberta;
             int emcima = clicavel && CheckCollisionPointRec(mouse, ret);
             Color cor = CORSMOUSE;
             char alt[150];
@@ -268,8 +352,70 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
             }
         }
 
+        //Aviso da última ajuda, ao lado do botão
+        if(ajuda.msg[0] != '\0' && estado.saida == 0){
+            DrawText(ajuda.msg, mx + 250, ALTTELA - 125, 24, CORTEXTO);
+        }
+
+        //PAINEL DE AJUDA (desenhado por último pra ficar por cima das alternativas)
+        if(ajuda.aberta == 1 && estado.respostaProcessada == 0){
+            int px = (COMPTELA - 380) / 2;
+            int py = 130;
+
+            Rectangle painel = {px, py, 380, 400};
+
+            Botao jok = CriarBotao(px + 20, py + 65, 340, ALTRET, "Jokempo");
+            Botao parimp = CriarBotao(px + 20, py + 130, 340, ALTRET, "Par ou Ímpar");
+            Botao univ = CriarBotao(px + 20, py + 195, 340, ALTRET, "Universitários");
+            Botao remover = CriarBotao(px + 20, py + 260, 340, ALTRET, "Remover pergunta");
+            Botao fechar = CriarBotao(px + 20, py + 325, 340, ALTRET, "Fechar");
+
+            DrawRectangleRounded(painel, 0.05f, 8, Fade(BLACK, 0.8f));
+            DrawText("AJUDAS", px + (380 - MeasureText("AJUDAS", ALTTEXTO))/2, py + 15, ALTTEXTO, CORTEXTO);
+
+            //JOKEMPO
+            if(BotaoAjuda(jok, minigame.jokempo)){
+                IniciarMinigame(2);
+                ajuda.aberta = 0;
+                telaAtual = 3;
+            }
+
+            //PAR OU ÍMPAR
+            if(BotaoAjuda(parimp, minigame.parimpar)){
+                IniciarMinigame(1);
+                ajuda.aberta = 0;
+                telaAtual = 3;
+            }
+
+            //UNIVERSITÁRIOS
+            if(BotaoAjuda(univ, ajuda.usouUniv)){
+                ConsultarUniversitarios(partida, perguntas[idx], nivel);
+                ajuda.usouUniv = 1;
+                ajuda.aberta = 0;
+            }
+
+            //REMOVER PERGUNTA (sorteia outra do mesmo nivel, a rodada não muda)
+            if(BotaoAjuda(remover, ajuda.usouRemover)){
+                if(PodeRemoverPergunta(partida, perguntas, qtde, nivel)){
+                    ajuda.usouRemover = 1;
+                    estado.idxPergunta = -1;
+                    strcpy(ajuda.msg, "Pergunta trocada!");
+                }else{
+                    strcpy(ajuda.msg, "Sem perguntas sobrando nesse nivel.");
+                }
+                ajuda.aberta = 0;
+            }
+
+            //FECHAR
+            if(DesenhaBotao(fechar, mouse)){
+                ajuda.aberta = 0;
+            }
+        }
+
         if(estado.respostaProcessada == 1){
             if(DesenhaBotao(continuar, mouse)){
+                ajuda.msg[0] = '\0';
+
                 if(partida->vidas <= 0){
                     //Manter info pra mandar pra tela winlose
                     estado.fimDeJogo = 1;// 1 perde
@@ -316,7 +462,7 @@ void WinLose(Partida partida){
     }else if(estado.fimDeJogo == 1){
         texto = "Acabaram as vidas. Voce terminou com:";
     }else if(estado.fimDeJogo == 2){
-        texto = "Voce parou e levou:";
+        texto = "Voce parou e levou metade do dinheiro:";
     }else{
         texto = "Acabaram as perguntas do nivel. Voce terminou com:";
     }
@@ -337,11 +483,13 @@ void WinLose(Partida partida){
 }
 
 /**
- * @brief Reinicia jogatina
+ * @brief Reinicia jogatina (chamado a cada partida nova)
  * 
  */
 void ReiniciarJogatina(void){
     estado = (EstadoJogo){0};
+    ajuda = (EstadoAjuda){0};
+    ReiniciarMinigame();
 
     estado.idxPergunta = -1;
     estado.premioPendente = -1;
