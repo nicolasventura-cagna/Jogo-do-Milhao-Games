@@ -5,13 +5,54 @@
 #include "interface.h"
 #include "cadastro.h"
 
+#define LARGBLOCO 1000 //largura do bloco central do jogo
+
 static EstadoJogo estado = {0};
+
+//Devolve o nivel que nao tem perguntas suficientes (0 = tudo certo)
+static int NivelFaltando(Pergunta *perguntas, int qtde){
+    int cont;
+
+    for(int nivel = 1; nivel <= 5; nivel++){
+        cont = 0;
+
+        for(int i = 0; i < qtde; i++){
+            if(perguntas[i].dificuldade == nivel){
+                cont++;
+            }
+        }
+
+        if(cont < PERGUNTAS_POR_NIVEL){
+            return nivel;
+        }
+    }
+
+    return 0;
+}
+
+//Começa a partida se tiver perguntas suficientes, senão escreve o aviso em msg
+static void ComecarJogo(Pergunta *perguntas, int qtde, Partida *partida, int modo, char *msg){
+    int faltando = NivelFaltando(perguntas, qtde);
+
+    if(faltando != 0){
+        sprintf(msg, "Faltam perguntas do nivel %d (minimo %d)", faltando, PERGUNTAS_POR_NIVEL);
+        return;
+    }
+
+    msg[0] = '\0';
+    ReiniciarJogatina();
+    liberarPartida(partida);//limpa a partida anterior (free(NULL) é seguro)
+    iniciarPartida(partida, modo);
+    telaAtual = 2;
+}
 
 /**
  * @brief Usuário clicou em Jogar, agora escolhe o modo
  * telaAtual = 1
  */
-void OpcJogarModo(Partida *partida){    
+void OpcJogarModo(Pergunta *perguntas, int qtde, Partida *partida){
+    static char msg[80] = "";//precisa sobreviver entre os frames
+
     int posx = (COMPTELA / 2) - (LARGRET / 2);
     int posy = (ALTTELA / 2) - ALTRET;
 
@@ -27,33 +68,30 @@ void OpcJogarModo(Partida *partida){
 
     ClearBackground(CORFUNDO);
 
-    //Desenhando Retângulos
+    DrawText("ESCOLHA O MODO", (COMPTELA - MeasureText("ESCOLHA O MODO", 50))/2, posy - 110, 50, CORTEXTO);
 
     //BACK
     if(DesenhaBotao(back, mouse)){
+        msg[0] = '\0';
         telaAtual = 0;
     }
 
     //FÁCIL
     if(DesenhaBotao(facil, mouse)){
-        ReiniciarJogatina();
-        iniciarPartida(partida, 0);
-        telaAtual = 2;
+        ComecarJogo(perguntas, qtde, partida, 0, msg);
     }
 
     //MÉDIO
     if(DesenhaBotao(medio, mouse)){
-        ReiniciarJogatina();
-        iniciarPartida(partida, 1);
-        telaAtual = 2;
+        ComecarJogo(perguntas, qtde, partida, 1, msg);
     }
 
     //DIFÍCIL
     if(DesenhaBotao(dificil, mouse)){
-        ReiniciarJogatina();
-        iniciarPartida(partida, 2);
-        telaAtual = 2;
+        ComecarJogo(perguntas, qtde, partida, 2, msg);
     }
+
+    DrawText(msg, (COMPTELA - MeasureText(msg, 24))/2, posy + (3 * ESPACAMENTO), 24, RED);
 
     EndDrawing();
 }
@@ -66,20 +104,18 @@ void OpcJogarModo(Partida *partida){
  * @param modo 
  */
 void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
-    int medeTexto;
-    int posicaoxPerg;
-    int posx = (COMPTELA / 2) - LARGRET - ESPACAMENTO/2;
-    int posy = (ALTTELA / 2) - ALTRET;
+    int mx = (COMPTELA - LARGBLOCO) / 2;//margem esquerda do bloco central
+    int posy = (ALTTELA / 2) - 100;     //onde começam as alternativas
+    int largAlt = (LARGBLOCO - 20) / 2; //largura de cada alternativa (2 colunas)
+    int yres = posy + 245;              //onde aparece o resultado
+    char status[120];
 
     int nivel;
     int idx; //indice pergunta
 
     Botao back = CriarBotao(POSBACK, POSBACK, MEDBACK, MEDBACK, "<");
 
-    Botao continuar = CriarBotao((COMPTELA - LARGRET) / 2,
-        posy + 2 * ESPACAMENTO,
-        LARGRET, ALTRET, "Continuar"
-    );
+    Botao continuar = CriarBotao(COMPTELA - mx - LARGRET, ALTTELA - 90, LARGRET, ALTRET, "Continuar");
 
     BeginDrawing();
 
@@ -100,15 +136,14 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
         }
 
         if(estado.saida == 1){
-            Botao sim = CriarBotao(50, 100, 50, 50, "SIM");
-            Botao nao = CriarBotao(100 + ESPACAMENTO/2, 100, 50, 50, "NÃO");
+            Botao sim = CriarBotao(mx, ALTTELA - 90, 100, ALTRET, "SIM");
+            Botao nao = CriarBotao(mx + 120, ALTTELA - 90, 100, ALTRET, "NAO");
 
-            DrawText("Realmente deseja parar?", 50, 75, 24, CORTEXTO);
+            DrawText("Realmente deseja parar?", mx, ALTTELA - 130, 24, CORTEXTO);
 
             if(DesenhaBotao(sim, mouse)){
                 estado.fimDeJogo = 2;//Desistiu
-                //partida->cash
-                telaAtual = 0;
+                telaAtual = 9;//vai pra tela de fim e leva o dinheiro
             }
             if(DesenhaBotao(nao, mouse)){
                 estado.saida = 0;
@@ -127,57 +162,72 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
 
             estado.idxPergunta = sortearPergunta(
                 partida, perguntas, qtde, nivel);
+
+            //premio da killstreak anterior: tira uma alternativa
+            //(tem que ser depois do sorteio, que zera as removidas)
+            if(estado.idxPergunta != -1 && estado.premioPendente == 1){
+                removerAlternativaErrada(partida, perguntas[estado.idxPergunta]);
+            }
+            estado.premioPendente = -1;
         }
 
         idx = estado.idxPergunta;
         if(idx == -1){
-            DrawText("Sem perguntas disponíveis!",//diferenciar?
-                    50, 50, ALTTEXTO, CORTEXTO);
+            estado.fimDeJogo = 3;//acabaram as perguntas do nivel
+            telaAtual = 9;
 
             EndDrawing();
             return;
         }
 
-        if(temPerguntasSuficientes(perguntas, qtde) == 0){
-            DrawText("Teste", 0, 0, 32, BLUE);
+        nivel = (partida->rodada - 1) / 3 + 1;
+
+        //Barra de status, alinhada com o bloco
+        DrawText(TextFormat("Rodada %d/%d | Nivel %d", partida->rodada, TOTAL_RODADAS, nivel), mx, 25, 24, CORTEXTO);
+
+        sprintf(status, "Vidas: %d | R$ %d | Acertos seguidos: %d", partida->vidas, partida->cash, partida->acertosSeg);
+        DrawText(status, mx + LARGBLOCO - MeasureText(status, 24), 25, 24, CORTEXTO);
+
+        if(partida->bonus > 0){
+            DrawText(TextFormat("+%.1fx nessa pergunta!", partida->bonus), mx, 55, 24, YELLOW);
         }
 
-        posicaoxPerg = ((COMPTELA/2) - (MeasureText(perguntas[idx].enunciado, ALTTEXTO)/2));
+        //Enunciado
+        QuebraTexto(perguntas[idx].enunciado, mx, 100, LARGBLOCO, 1);
 
-        ExibePergunta(perguntas[idx], idx + 1, posicaoxPerg,//EXIBE COM NUMERO DA PERGUNTA EM LISTAR..... reutilizei a função
-                50, 900, 1);
+        //Alternativas 2x2, com quebra de linha dentro da caixa
+        for(int i = 0; i < 4; i++){
+            Rectangle ret = {mx + (largAlt + 20) * (i % 2), posy + 120 * (i / 2), largAlt, 100};
+            int removida = partida->altRemovida[i];
+            int clicavel = !removida && estado.respostaProcessada == 0 && estado.saida == 0;
+            int emcima = clicavel && CheckCollisionPointRec(mouse, ret);
+            Color cor = CORSMOUSE;
+            char alt[150];
 
-        //Alternativas com botão padrão, não aumenta se mt grande
-        Botao A = CriarBotao(posx, posy, LARGRET, ALTRET,
-                    TextFormat("A) %s", perguntas[idx].alternativa[0]));
-
-        Botao B = CriarBotao(posx + ESPACAMENTO/2 + LARGRET, posy, LARGRET, ALTRET,
-                    TextFormat("B) %s", perguntas[idx].alternativa[1]));
-
-        Botao C = CriarBotao(posx, posy + ESPACAMENTO, LARGRET, ALTRET,
-                    TextFormat("C) %s", perguntas[idx].alternativa[2]));
-
-        Botao D = CriarBotao(posx + ESPACAMENTO/2 + LARGRET, posy + ESPACAMENTO, LARGRET, ALTRET,
-                    TextFormat("D) %s", perguntas[idx].alternativa[3]));
-
-        if(estado.respostaProcessada == 0){//Evitar loop desnecessário, se ainda n foi processada, recebe
-            if(DesenhaBotao(A, mouse)){
-                estado.respostaFeita = 'A';
-                estado.respondeu = 1;
+            if(removida){
+                cor = DARKGRAY;
+            }else if(emcima){
+                cor = CORCMOUSE;
             }
 
-            if(DesenhaBotao(B, mouse)){
-                estado.respostaFeita = 'B';
-                estado.respondeu = 1;
+            //depois de responder: certa em verde, errada escolhida em vermelho
+            if(estado.respostaProcessada == 1){
+                if('A' + i == perguntas[idx].correta){
+                    cor = DARKGREEN;
+                }else if('A' + i == estado.respostaFeita){
+                    cor = MAROON;
+                }
             }
 
-            if(DesenhaBotao(C, mouse)){
-                estado.respostaFeita = 'C';
-                estado.respondeu = 1;
+            DrawRectangleRounded(ret, 0.15f, 8, cor);
+
+            if(!removida){
+                sprintf(alt, "%c) %s", 'A' + i, perguntas[idx].alternativa[i]);
+                QuebraTexto(alt, ret.x + 15, ret.y + 10, ret.width - 30, 1);
             }
 
-            if(DesenhaBotao(D, mouse)){
-                estado.respostaFeita = 'D';
+            if(emcima && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                estado.respostaFeita = 'A' + i;
                 estado.respondeu = 1;
             }
         }
@@ -190,7 +240,7 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
             estado.respostaProcessada = 1;
 
             if(estado.acertou){
-                estado.premioPendente = aplicarKillstreak(partida);//fzr
+                estado.premioPendente = aplicarKillstreak(partida);
             }else{
                 estado.premioPendente = -1;
             }
@@ -198,13 +248,23 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
 
         if(estado.respostaProcessada == 1){
             if(estado.acertou){
-                DrawText("ACERTOU!", 50, 450, 32, GREEN);
+                DrawText("ACERTOU!", mx, yres, 32, GREEN);
+
+                if(estado.premioPendente == 0){
+                    DrawText("KILLSTREAK! Ganhou R$ 1000 de bonus!", mx, yres + 45, 24, CORTEXTO);
+                }else if(estado.premioPendente == 1){
+                    DrawText("KILLSTREAK! Uma alternativa sera eliminada na proxima pergunta.", mx, yres + 45, 24, CORTEXTO);
+                }else if(estado.premioPendente == 2){
+                    DrawText("KILLSTREAK! A proxima pergunta vale +0.5x de dinheiro.", mx, yres + 45, 24, CORTEXTO);
+                }else if(estado.premioPendente == 3){
+                    DrawText("KILLSTREAK! Ganhou uma vida extra!", mx, yres + 45, 24, CORTEXTO);
+                }
             }else{
-                DrawText("ERROU!", 50, 450, 32, RED);
+                DrawText("ERROU!", mx, yres, 32, RED);
 
                 DrawText(TextFormat("Resposta correta: %c",
                     perguntas[idx].correta),
-                    50, 490, 24, BLACK);
+                    mx, yres + 45, 24, CORTEXTO);
             }
         }
 
@@ -239,17 +299,38 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
  * 
  */
 void WinLose(Partida partida){
+    char *titulo = "FIM DE JOGO";
+    char *texto;
+    char valor[40];
+    int meio = ALTTELA / 2;
+
+    Botao menu = CriarBotao((COMPTELA - LARGRET) / 2, ALTTELA - 120, LARGRET, ALTRET, "Menu");
 
     BeginDrawing();
     
     ClearBackground(CORFUNDO);
 
     if(estado.fimDeJogo == 0){
-        DrawText("Vitoria---------", (COMPTELA - MeasureText("Vitória---------", 42)), 50, 42, CORTEXTO);
-        DrawText(TextFormat("Dinheiro: %d", partida.cash), 50, 50 + ESPACAMENTO, 42, CORTEXTO);
-        //...
+        titulo = "VITORIA!";
+        texto = "Voce terminou todas as rodadas com:";
+    }else if(estado.fimDeJogo == 1){
+        texto = "Acabaram as vidas. Voce terminou com:";
+    }else if(estado.fimDeJogo == 2){
+        texto = "Voce parou e levou:";
     }else{
-        //....
+        texto = "Acabaram as perguntas do nivel. Voce terminou com:";
+    }
+
+    sprintf(valor, "R$ %d", partida.cash);
+
+    DrawText(titulo, (COMPTELA - MeasureText(titulo, 60))/2, meio - 180, 60, CORTEXTO);
+    DrawText(texto, (COMPTELA - MeasureText(texto, ALTTEXTO))/2, meio - 60, ALTTEXTO, CORTEXTO);
+    DrawText(valor, (COMPTELA - MeasureText(valor, 70))/2, meio, 70, GREEN);
+
+    //Aqui depois entra o ranking (pedir o nome e salvar partida.cash)
+
+    if(DesenhaBotao(menu, mouse)){
+        telaAtual = 0;
     }
 
     EndDrawing();

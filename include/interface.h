@@ -29,7 +29,7 @@
 typedef struct{
     int posx;
     int posy;
-    char *caracteres;
+    const char *caracteres;
 }Texto;
 
 typedef struct{
@@ -54,7 +54,7 @@ typedef struct {
     int respostaProcessada;//evitar bug, e chamar a func infinitamente
     int acertou;
     int saida;//Back
-    int fimDeJogo;// 0 - ganha , 1 - perde, 2 - desiste
+    int fimDeJogo;// 0 - ganha , 1 - perde, 2 - desiste, 3 - acabaram as perguntas do nivel
     int premioPendente;
     char mensagem[100];
 }EstadoJogo;
@@ -81,13 +81,14 @@ void OpcPerguntas(void);
 
 void OpcRanking(void);
 
-Botao CriarBotao(int x, int y, int largura, int altura, char *texto);
+Botao CriarBotao(int x, int y, int largura, int altura, const char *texto);
 
 void DesenhaCaixa(CaixaTexto *caixa, Vector2 mouse);
 
 int DesenhaBotao(Botao botao, Vector2 mouse);
 
 void IniciarCaixa(CaixaTexto *caixa, int x, int y, int largura, int altura, int max);
+
 
 //INTERFACE.C
 
@@ -115,7 +116,7 @@ int ExibePergunta(Pergunta pergunta, int numero, int x, int y, int largura, int 
 
 void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida);
 
-void OpcJogarModo(Partida *partida);
+void OpcJogarModo(Pergunta *perguntas, int qtde, Partida *partida);
 
 void WinLose(Partida partida);
 

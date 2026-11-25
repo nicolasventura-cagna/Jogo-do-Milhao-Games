@@ -9,18 +9,16 @@
 #include "interface.h"
 #include "limpabuffer.h"
 
-#define LARGURA 1000
-#define ALTURA 600
+#define LARGURA 1280
+#define ALTURA 720
 #define NOME "Jogo do Milhão"
 
 typedef enum{SAIR,JOGAR,CADASTRAR,LISTAR,PESQUISAR,ALTERAR,EXCLUIR}Opcoes;
 
 int main(void){
+    Partida partida = {0};
     Pergunta *pergunta = NULL;
     int qtdetotal = 0;
-    
-    //Raylib:
-    
 
     srand(time(NULL));//gera uma seed aleatoria
 
@@ -46,17 +44,28 @@ int main(void){
     {
         mouse = GetMousePosition();
 
+        /* Pra alguém mais paciente que eu (G):
+            - Imagem de fundo
+            - Sons/Músicas
+        */
+
         switch(telaAtual){
             case 0:
                 Menu();
                 break;
 
             case 1:
-                OpcJogarModo();
+                OpcJogarModo(pergunta, qtdetotal, &partida);
+                break;
+
+            case 2:
+                JogoPerg(pergunta, qtdetotal, &partida);
                 break;
 
 
-
+            case 9:
+                WinLose(partida);
+                break;
 
             case 10:
                 OpcPerguntas();
@@ -97,6 +106,8 @@ int main(void){
     }else{
         printf("Erro ao atualizar BIN!\n");
     }
+
+    liberarPartida(&partida);//limpa as perguntas usadas, se fechou no meio da partida
 
     free(pergunta);
 

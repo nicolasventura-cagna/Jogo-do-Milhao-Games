@@ -63,6 +63,8 @@ void Menu(){
     BeginDrawing();
 
     ClearBackground(CORFUNDO);
+
+    DrawText("JOGO DO MILHAO", (COMPTELA - MeasureText("JOGO DO MILHAO", 50))/2, posy - 110, 50, CORTEXTO);
     
     //JOGAR
     if(DesenhaBotao(jogar, mouse)){
@@ -180,7 +182,7 @@ int DesenhaBotao(Botao botao, Vector2 mouse){
     //Como tudo ta dentro de um loop, verifica constantemente
     botao.cor = CheckCollisionPointRec(mouse, botao.retangulo) ? CORCMOUSE : CORSMOUSE;//Operador Terciário (? acho q é esse o nome), if de 2 opções
 
-    DrawRectangleRec(botao.retangulo, botao.cor);
+    DrawRectangleRounded(botao.retangulo, 0.3f, 8, botao.cor);
 
     DrawText(botao.palavra.caracteres,
             botao.palavra.posx,
@@ -204,7 +206,7 @@ int DesenhaBotao(Botao botao, Vector2 mouse){
  * @param texto 
  * @return Botao 
  */
-Botao CriarBotao(int x, int y, int largura, int altura, char *texto){
+Botao CriarBotao(int x, int y, int largura, int altura, const char *texto){
     Botao botao;
 
     botao.retangulo = (Rectangle){
@@ -306,7 +308,7 @@ void DesenhaCaixa(CaixaTexto *caixa, Vector2 mouse){
     }
 
     DrawText(caixa->texto + inicio, caixa->retangulo.x + 5, 
-    caixa->retangulo.y + (caixa->retangulo.height - 20)/2, 20, CORTEXTO);
+    caixa->retangulo.y + (caixa->retangulo.height - 20)/2, 20, BLACK);
 }
 
 /**
