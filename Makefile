@@ -32,7 +32,7 @@ endif
 # ARQUIVOS DO PROJETO
 # ==================================================
 
-SRCS = main.c \
+SRCS = src/main.c \
        src/cadastro.c \
        src/arquivo.c \
        src/jogo.c \

@@ -41,8 +41,116 @@ char corretaSel = 0;
 int difSel = 0;
 char mensagem[60] = "";
 
+//Fundo e música
+static Texture2D fundo;//arte completa (só no menu)
+static Texture2D fundoJogo;//versão desfocada e escura (todas as outras telas)
+static Music musica;
+static int mudo = 0;//1 = música mutada
+
 //Enrico, para de colocar "// for (ou seja la oq)". Grata
 //bom saber que não sou o unico que não gosta.
+
+/**
+ * @brief Carrega a imagem de fundo e a música. Chamar depois de InitWindow e InitAudioDevice
+ * Se algum arquivo não existir, o jogo roda normal, só sem ele
+ */
+void CarregarRecursos(){
+    fundo = LoadTexture("assets/fundo.png");
+    fundoJogo = LoadTexture("assets/fundo_jogo.png");
+
+    musica = LoadMusicStream("assets/musica.ogg");
+
+    if(IsMusicValid(musica)){
+        musica.looping = true;
+        SetMusicVolume(musica, 0.5f);
+        PlayMusicStream(musica);
+    }
+}
+
+/**
+ * @brief Alimenta a música. Tem que ser chamada todo frame, senão ela engasga e para
+ * 
+ */
+void AtualizarMusica(){
+    if(IsMusicValid(musica)){
+        UpdateMusicStream(musica);
+    }
+}
+
+/**
+ * @brief Botão de mudo, canto superior direito (espelho do back)
+ * Chamado dentro do DesenhaFundo, então aparece em todas as telas
+ */
+static void BotaoMudo(){
+    Rectangle ret = {COMPTELA - POSBACK - MEDBACK, POSBACK, MEDBACK, MEDBACK};
+    int emcima = CheckCollisionPointRec(mouse, ret);
+    int x = (int)ret.x;
+    int y = (int)ret.y;
+
+    if(emcima && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+        mudo = !mudo;
+        SetMasterVolume(mudo ? 0.0f : 1.0f);
+    }
+
+    DrawRectangleRounded(ret, 0.3f, 8, emcima ? CORCMOUSE : CORSMOUSE);
+
+    //alto-falante
+    DrawRectangle(x + 10, y + 19, 8, 12, WHITE);
+    DrawTriangle((Vector2){x + 18, y + 19}, (Vector2){x + 18, y + 31}, (Vector2){x + 28, y + 38}, WHITE);
+    DrawTriangle((Vector2){x + 18, y + 19}, (Vector2){x + 28, y + 38}, (Vector2){x + 28, y + 12}, WHITE);
+
+    if(mudo){
+        //X vermelho = mutado
+        DrawLineEx((Vector2){x + 32, y + 18}, (Vector2){x + 44, y + 32}, 3, RED);
+        DrawLineEx((Vector2){x + 44, y + 18}, (Vector2){x + 32, y + 32}, 3, RED);
+    }else{
+        //ondinhas = tocando
+        DrawRing((Vector2){x + 28, y + 25}, 9, 11, -45, 45, 16, WHITE);
+        DrawRing((Vector2){x + 28, y + 25}, 15, 17, -45, 45, 16, WHITE);
+    }
+}
+
+/**
+ * @brief Desenha o fundo (no lugar do ClearBackground) e o botão de mudo
+ * Menu = arte completa, resto das telas = versão desfocada
+ * Chamar logo depois do BeginDrawing em toda tela
+ */
+void DesenhaFundo(){
+    Texture2D atual = fundo;//menu (telaAtual 0) usa a arte completa
+
+    if(telaAtual != 0 && IsTextureValid(fundoJogo)){
+        atual = fundoJogo;//qualquer outra tela usa a versão desfocada
+    }
+
+    if(IsTextureValid(atual)){
+        DrawTexturePro(atual,
+            (Rectangle){0, 0, atual.width, atual.height},
+            (Rectangle){0, 0, COMPTELA, ALTTELA},
+            (Vector2){0, 0}, 0.0f, WHITE);
+    }else{
+        ClearBackground(CORFUNDO);//sem imagem, usa a cor de antes
+    }
+
+    BotaoMudo();
+}
+
+/**
+ * @brief Libera imagem e música. Chamar antes de CloseAudioDevice e CloseWindow
+ * 
+ */
+void LiberarRecursos(){
+    if(IsTextureValid(fundo)){
+        UnloadTexture(fundo);
+    }
+
+    if(IsTextureValid(fundoJogo)){
+        UnloadTexture(fundoJogo);
+    }
+
+    if(IsMusicValid(musica)){
+        UnloadMusicStream(musica);
+    }
+}
 
 /**
  * @brief Tela de Menu
@@ -50,7 +158,7 @@ char mensagem[60] = "";
  */
 void Menu(){
     int posx = (COMPTELA / 2) - (LARGRET / 2);
-    int posy = (ALTTELA / 2) - ALTRET;
+    int posy = (ALTTELA / 2) - ALTRET + 65;//+65 pra ficar abaixo do logo da arte de fundo
 
     Botao jogar = CriarBotao(posx, posy, LARGRET, ALTRET, "Jogar");
 
@@ -62,10 +170,8 @@ void Menu(){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
-    DrawText("JOGO DO MILHAO", (COMPTELA - MeasureText("JOGO DO MILHAO", 50))/2, posy - 110, 50, CORTEXTO);
-    
     //JOGAR
     if(DesenhaBotao(jogar, mouse)){
         telaAtual = 1;
@@ -112,7 +218,7 @@ void OpcPerguntas(){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     //Desenhando Retângulos
 
@@ -159,7 +265,7 @@ void OpcRanking(){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     //BACK
     if(DesenhaBotao(back, mouse)){

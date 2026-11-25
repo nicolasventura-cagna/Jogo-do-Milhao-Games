@@ -39,7 +39,7 @@ void PerguntaListar(Pergunta *pergunta, int qtde){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(DesenhaBotao(back, mouse)){
         telaAtual = 10;//Retorna pra opções de perguntas
@@ -105,7 +105,7 @@ void PerguntaExcluir(Pergunta **pergunta, int *qtde){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(DesenhaBotao(back, mouse)){
         telaAtual = 10;
@@ -218,7 +218,7 @@ void PerguntaPesquisar(Pergunta *pergunta, int qtde){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(DesenhaBotao(back, mouse)){
         telaAtual = 10;
@@ -326,7 +326,7 @@ void PerguntaAlterar(Pergunta *pergunta, int qtde){
 
         BeginDrawing();
 
-        ClearBackground(CORFUNDO);
+        DesenhaFundo();
 
         if(DesenhaBotao(back, mouse)){
             telaAtual = 10;
@@ -340,7 +340,7 @@ void PerguntaAlterar(Pergunta *pergunta, int qtde){
             DrawText("Nenhuma pergunta cadastrada", (COMPTELA - MeasureText("Nenhuma pergunta cadastrada", ALTTEXTO))/2, 50, ALTTEXTO, CORTEXTO);
         }
 
-        DrawText(mensagem, 50, ALTTELA - 50, 24, DARKGREEN);
+        DrawText(mensagem, 50, ALTTELA - 50, 24, GREEN);
 
         if(CheckCollisionPointRec(mouse, areaPergunta)){
             scroll += GetMouseWheelMove() * 100;
@@ -404,7 +404,7 @@ void PerguntaAlterar(Pergunta *pergunta, int qtde){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(DesenhaBotao(back, mouse)){
         escolhida = -1;//volta pra lista
@@ -519,7 +519,7 @@ void OpcInserir(Pergunta **pergunta, int *qtde){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(DesenhaBotao(back, mouse)){
         telaAtual = 10;

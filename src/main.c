@@ -38,6 +38,8 @@ int main(void){
     }
 
     InitWindow(LARGURA, ALTURA, NOME);
+    InitAudioDevice();      
+    CarregarRecursos();     
     SetTargetFPS(60);
 
     while (!WindowShouldClose() && telaAtual != -1)    // Detecta o botão de fechar a janela ou a tecla ESC
@@ -48,6 +50,7 @@ int main(void){
             - Imagem de fundo
             - Sons/Músicas
         */
+        AtualizarMusica();
 
         switch(telaAtual){
             case 0:
@@ -96,7 +99,9 @@ int main(void){
         }
 
     }
-    
+
+    LiberarRecursos();
+    CloseAudioDevice();
     CloseWindow();
 
     salvaCSV(pergunta, qtdetotal);

@@ -20,7 +20,7 @@
 
 //Mudar cores, p ficar + agradável
 #define CORFUNDO GRAY //Mudar pra imagem dps
-#define CORTEXTO BLACK
+#define CORTEXTO WHITE
 #define CORCMOUSE DARKBLUE //Cor botão com mouse
 #define CORSMOUSE BLUE     //Cor botão sem mouse
 
@@ -80,6 +80,15 @@ void Menu(void);
 void OpcPerguntas(void);
 
 void OpcRanking(void);
+
+//Fundo, música e botão de mudo
+void CarregarRecursos(void);
+
+void AtualizarMusica(void);
+
+void DesenhaFundo(void);
+
+void LiberarRecursos(void);
 
 Botao CriarBotao(int x, int y, int largura, int altura, const char *texto);
 

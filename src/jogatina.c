@@ -66,7 +66,7 @@ void OpcJogarModo(Pergunta *perguntas, int qtde, Partida *partida){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     DrawText("ESCOLHA O MODO", (COMPTELA - MeasureText("ESCOLHA O MODO", 50))/2, posy - 110, 50, CORTEXTO);
 
@@ -119,7 +119,7 @@ void JogoPerg(Pergunta *perguntas, int qtde, Partida *partida){
 
     BeginDrawing();
 
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(estado.fimDeJogo != 2){//Se usuário n desistiu, continua
 
@@ -308,7 +308,7 @@ void WinLose(Partida partida){
 
     BeginDrawing();
     
-    ClearBackground(CORFUNDO);
+    DesenhaFundo();
 
     if(estado.fimDeJogo == 0){
         titulo = "VITORIA!";
